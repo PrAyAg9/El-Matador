@@ -1,24 +1,102 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useAuth } from '@/context/AuthContext';
+import { useState, useEffect, useRef, useLayoutEffect } from 'react';
+import { useAuth } from '@/components/auth/AuthProvider';
 import ChatInterface from '@/components/dashboard/ChatInterface';
+import { User } from 'firebase/auth';
+
+// Extended User type with our custom properties
+interface ExtendedUser extends User {
+  financialProfile?: {
+    riskTolerance?: 'low' | 'medium' | 'high';
+    investmentGoals?: string[];
+    [key: string]: any;
+  };
+}
 
 export default function AssistantPage() {
-  const { userData } = useAuth();
+  const { user } = useAuth();
+  const extendedUser = user as ExtendedUser;
   const [isActivatingAI, setIsActivatingAI] = useState(true);
+  const pageRef = useRef<HTMLDivElement>(null);
+  const [activeTopic, setActiveTopic] = useState('');
+  
+  // Reference to artificially trigger events in ChatInterface
+  const chatInputRef = useRef<HTMLInputElement>(null);
+  
+  // Force scroll to top on initial load - using useLayoutEffect to run before render
+  useLayoutEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
   
   // Simulate AI mode activation
   useEffect(() => {
     const timer = setTimeout(() => {
+      // Force scroll to top again right before showing the chat interface
+      window.scrollTo(0, 0);
       setIsActivatingAI(false);
     }, 2000);
     
     return () => clearTimeout(timer);
   }, []);
 
+  // Add event listener to prevent any automatic scrolling
+  useEffect(() => {
+    const preventScroll = () => {
+      window.scrollTo(0, 0);
+    };
+    
+    // Add event listener for scroll events
+    window.addEventListener('scroll', preventScroll, { passive: false });
+    
+    // Cleanup - remove event listener when component unmounts
+    return () => {
+      window.removeEventListener('scroll', preventScroll);
+    };
+  }, []);
+  
+  // Effect to handle topic selection
+  useEffect(() => {
+    if (activeTopic && !isActivatingAI) {
+      // Find the chat input and simulate typing
+      const inputElement = document.querySelector('#chat-input') as HTMLInputElement;
+      if (inputElement) {
+        // Set the value
+        switch (activeTopic) {
+          case 'retirement':
+            inputElement.value = 'How should I plan for retirement?';
+            break;
+          case 'investment':
+            inputElement.value = 'What investment strategies would you recommend?';
+            break;
+          case 'tax':
+            inputElement.value = 'How can I optimize my tax planning?';
+            break;
+          case 'debt':
+            inputElement.value = 'What is the best way to manage my debt?';
+            break;
+        }
+        
+        // Trigger the enter key press after a delay to ensure chat is visible
+        setTimeout(() => {
+          window.scrollTo(0, 0); // Ensure we're still at the top
+          const enterEvent = new KeyboardEvent('keydown', {
+            bubbles: true,
+            cancelable: true,
+            key: 'Enter',
+            code: 'Enter'
+          });
+          inputElement.dispatchEvent(enterEvent);
+          
+          // Reset active topic
+          setActiveTopic('');
+        }, 100);
+      }
+    }
+  }, [activeTopic, isActivatingAI]);
+
   return (
-    <div className="px-4 py-6 sm:px-0">
+    <div className="px-4 py-6 sm:px-0" ref={pageRef}>
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-indigo-400">El Matador Assistant</h1>
         <p className="text-gray-300">Ask me anything about your finances, investments, or planning</p>
@@ -49,18 +127,18 @@ export default function AssistantPage() {
               <div>
                 <h3 className="text-sm font-medium text-gray-400">Risk Tolerance</h3>
                 <p className="mt-1 text-base font-medium text-gray-300">
-                  {userData?.financialProfile?.riskTolerance === 'low' && 'Conservative'}
-                  {userData?.financialProfile?.riskTolerance === 'medium' && 'Moderate'}
-                  {userData?.financialProfile?.riskTolerance === 'high' && 'Aggressive'}
-                  {!userData?.financialProfile?.riskTolerance && 'Not set'}
+                  {extendedUser?.financialProfile?.riskTolerance === 'low' && 'Conservative'}
+                  {extendedUser?.financialProfile?.riskTolerance === 'medium' && 'Moderate'}
+                  {extendedUser?.financialProfile?.riskTolerance === 'high' && 'Aggressive'}
+                  {!extendedUser?.financialProfile?.riskTolerance && 'Not set'}
                 </p>
               </div>
               
               <div>
                 <h3 className="text-sm font-medium text-gray-400">Investment Goals</h3>
-                {userData?.financialProfile?.investmentGoals?.length ? (
+                {extendedUser?.financialProfile?.investmentGoals?.length ? (
                   <ul className="mt-1 text-sm text-gray-300">
-                    {userData.financialProfile.investmentGoals.map((goal, index) => (
+                    {extendedUser.financialProfile.investmentGoals.map((goal: string, index: number) => (
                       <li key={index} className="flex items-center mt-1">
                         <svg className="w-4 h-4 mr-1.5 text-indigo-500" fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
@@ -91,6 +169,7 @@ export default function AssistantPage() {
             <div className="mt-4 space-y-2">
               <button
                 type="button"
+                onClick={() => setActiveTopic('retirement')}
                 className="block w-full p-3 text-left bg-gray-700 hover:bg-gray-600 rounded-md"
               >
                 <span className="text-sm font-medium text-gray-300">Retirement Planning</span>
@@ -100,6 +179,7 @@ export default function AssistantPage() {
               </button>
               <button
                 type="button"
+                onClick={() => setActiveTopic('investment')}
                 className="block w-full p-3 text-left bg-gray-700 hover:bg-gray-600 rounded-md"
               >
                 <span className="text-sm font-medium text-gray-300">Investment Strategies</span>
@@ -109,6 +189,7 @@ export default function AssistantPage() {
               </button>
               <button
                 type="button"
+                onClick={() => setActiveTopic('tax')}
                 className="block w-full p-3 text-left bg-gray-700 hover:bg-gray-600 rounded-md"
               >
                 <span className="text-sm font-medium text-gray-300">Tax Planning</span>
@@ -118,6 +199,7 @@ export default function AssistantPage() {
               </button>
               <button
                 type="button"
+                onClick={() => setActiveTopic('debt')}
                 className="block w-full p-3 text-left bg-gray-700 hover:bg-gray-600 rounded-md"
               >
                 <span className="text-sm font-medium text-gray-300">Debt Management</span>

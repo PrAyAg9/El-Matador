@@ -1,7 +1,8 @@
 import type { Metadata } from 'next';
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { AuthProvider } from '@/context/AuthContext';
+import AuthProvider from '@/components/auth/AuthProvider';
+import ElMatadorGuide from '@/components/ElMatadorGuide';
 
 const inter = Inter({
   subsets: ["latin"],
@@ -9,7 +10,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Financial AI Assistant",
+  title: "El Matador - Financial AI Assistant",
   description: "Your personalized AI-powered financial assistant",
 };
 
@@ -21,10 +22,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${inter.variable} font-sans antialiased`}
+        className={`${inter.variable} font-sans antialiased bg-gray-900 text-white min-h-screen flex flex-col`}
       >
         <AuthProvider>
-          {children}
+          <main className="flex-grow">
+            {children}
+          </main>
         </AuthProvider>
       </body>
     </html>

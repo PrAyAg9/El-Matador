@@ -2,6 +2,11 @@
 
 import { initializeApp, getApp, getApps } from 'firebase/app';
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
+import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { getFunctions } from 'firebase/functions';
+
+// Check if we're in a browser environment
+const isBrowser = typeof window !== 'undefined';
 
 // Firebase configuration
 const firebaseConfig = {
@@ -15,24 +20,38 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-let app;
+let app: any = null;
 try {
-  console.log('Initializing Firebase app...');
-  app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-  console.log('Firebase app initialized successfully');
+  if (isBrowser) {
+    console.log('Initializing Firebase app...');
+    app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+    console.log('Firebase app initialized successfully');
+  }
 } catch (error) {
   console.error('Error initializing Firebase:', error);
   throw new Error('Failed to initialize Firebase');
 }
 
 // Initialize Firebase services
-const auth = getAuth(app);
+const auth = isBrowser && app ? getAuth(app) : null;
+const firestoreDb = isBrowser && app ? getFirestore(app) : null;
+const functions = isBrowser && app ? getFunctions(app) : null;
+
+// For debugging
+if (isBrowser) {
+  console.log('Firebase initialization status:');
+  console.log('- Auth initialized:', auth ? 'Yes' : 'No');
+  console.log('- Firestore initialized:', firestoreDb ? 'Yes' : 'No');
+  console.log('- Functions initialized:', functions ? 'Yes' : 'No');
+}
 
 // Initialize Google Auth Provider
-const googleProvider = new GoogleAuthProvider();
-googleProvider.setCustomParameters({
-  prompt: 'select_account',
-});
+const googleProvider = isBrowser ? new GoogleAuthProvider() : null;
+if (isBrowser && googleProvider) {
+  googleProvider.setCustomParameters({
+    prompt: 'select_account',
+  });
+}
 
 // Mock Firestore implementation for local development
 const mockDb = {
@@ -74,6 +93,7 @@ const mockDb = {
 
 // Simple helper functions to mimic Firestore functions
 const mockFirestore = {
+  collection,
   doc: (db: any, collection: string, docId: string) => {
     return mockDb.collection(collection).doc(docId);
   },
@@ -85,7 +105,18 @@ const mockFirestore = {
   },
   updateDoc: async (docRef: any, data: any) => {
     return await docRef.update(data);
-  }
+  },
+  serverTimestamp: () => new Date()
+};
+
+// Export the real functions if available, otherwise use mock
+const firestore = {
+  collection: firestoreDb ? collection : mockFirestore.collection,
+  doc: firestoreDb ? doc : mockFirestore.doc,
+  getDoc: firestoreDb ? getDoc : mockFirestore.getDoc, 
+  setDoc: firestoreDb ? setDoc : mockFirestore.setDoc,
+  updateDoc: firestoreDb ? updateDoc : mockFirestore.updateDoc,
+  serverTimestamp: firestoreDb ? serverTimestamp : mockFirestore.serverTimestamp
 };
 
 export { 
@@ -93,5 +124,7 @@ export {
   auth, 
   googleProvider, 
   mockDb as db, 
-  mockFirestore as firestore
+  firestore,
+  firestoreDb,
+  functions
 }; 

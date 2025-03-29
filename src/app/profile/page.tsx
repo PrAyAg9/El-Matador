@@ -4,6 +4,18 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/AuthContext'
 import DashboardLayout from '@/components/dashboard/Layout'
+import { UserIcon, CreditCardIcon, BellIcon, CogIcon } from '@heroicons/react/24/outline'
+
+// Add this interface near the top of the file, before the component
+interface NotificationPrefs {
+  emailNotifications: boolean;
+  marketUpdates: boolean;
+  portfolioAlerts: boolean;
+  recommendationUpdates: boolean;
+  newsDigest: boolean;
+  aiInsights: boolean;
+  [key: string]: boolean; // Add index signature
+}
 
 export default function ProfilePage() {
   const { user, loading, logout } = useAuth()
@@ -34,7 +46,7 @@ export default function ProfilePage() {
   })
 
   // Notification preferences form state
-  const [notificationPrefs, setNotificationPrefs] = useState({
+  const [notificationPrefs, setNotificationPrefs] = useState<NotificationPrefs>({
     emailNotifications: true,
     marketUpdates: true,
     portfolioAlerts: true,
@@ -46,7 +58,7 @@ export default function ProfilePage() {
   // Account settings form state
   const [accountSettings, setAccountSettings] = useState({
     twoFactorAuth: false,
-    darkMode: false,
+    darkMode: true,
     dataSharing: true,
     language: 'english'
   })
@@ -73,7 +85,7 @@ export default function ProfilePage() {
     }
   }, [user, loading, router])
 
-  const handlePersonalInfoChange = (e) => {
+  const handlePersonalInfoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
     setPersonalInfo(prev => ({
       ...prev,
@@ -81,8 +93,8 @@ export default function ProfilePage() {
     }))
   }
 
-  const handleFinancialProfileChange = (e) => {
-    const { name, value, type, checked } = e.target
+  const handleFinancialProfileChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value, type, checked } = e.target as HTMLInputElement
     
     if (type === 'checkbox') {
       setFinancialProfile(prev => ({
@@ -109,7 +121,7 @@ export default function ProfilePage() {
     }
   }
 
-  const handleNotificationPrefsChange = (e) => {
+  const handleNotificationPrefsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, checked } = e.target
     setNotificationPrefs(prev => ({
       ...prev,
@@ -117,8 +129,8 @@ export default function ProfilePage() {
     }))
   }
 
-  const handleAccountSettingsChange = (e) => {
-    const { name, value, type, checked } = e.target
+  const handleAccountSettingsChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value, type, checked } = e.target as HTMLInputElement
     
     if (type === 'checkbox') {
       setAccountSettings(prev => ({
@@ -133,7 +145,7 @@ export default function ProfilePage() {
     }
   }
 
-  const handleSave = (e) => {
+  const handleSave = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setSaveLoading(true)
     
@@ -163,8 +175,8 @@ export default function ProfilePage() {
       <DashboardLayout>
         <div className="flex items-center justify-center h-screen w-full">
           <div className="text-center">
-            <div className="w-16 h-16 border-t-4 border-b-4 border-blue-500 rounded-full animate-spin mx-auto"></div>
-            <p className="mt-4 text-xl font-semibold text-gray-700">Loading your profile...</p>
+            <div className="w-16 h-16 border-t-4 border-b-4 border-indigo-500 rounded-full animate-spin mx-auto"></div>
+            <p className="mt-4 text-xl font-semibold text-gray-300">Loading your profile...</p>
           </div>
         </div>
       </DashboardLayout>
@@ -175,10 +187,10 @@ export default function ProfilePage() {
     <DashboardLayout>
       <div className="p-4 sm:p-6 md:p-8">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">Profile Settings</h1>
+          <h1 className="text-2xl font-bold text-indigo-400">Profile Settings</h1>
           <button 
             onClick={handleLogout}
-            className="mt-2 sm:mt-0 px-4 py-2 text-sm font-medium text-red-600 hover:text-red-800 bg-red-50 hover:bg-red-100 rounded-md transition-colors"
+            className="mt-2 sm:mt-0 px-4 py-2 text-sm font-medium text-red-400 hover:text-red-300 bg-gray-700 hover:bg-gray-600 rounded-md transition-colors"
           >
             Sign Out
           </button>
@@ -186,29 +198,30 @@ export default function ProfilePage() {
         
         {/* Success Message */}
         {successMessage && (
-          <div className="mb-6 p-4 bg-green-50 border-l-4 border-green-500 text-green-700 rounded">
+          <div className="mb-6 p-4 bg-indigo-900 bg-opacity-30 border-l-4 border-indigo-500 text-indigo-300 rounded">
             {successMessage}
           </div>
         )}
         
         {/* Profile Tabs */}
-        <div className="mb-6 border-b border-gray-200">
+        <div className="mb-6 border-b border-gray-700">
           <nav className="-mb-px flex space-x-8">
             {[
-              { id: 'personal', label: 'Personal Information' },
-              { id: 'financial', label: 'Financial Profile' },
-              { id: 'notifications', label: 'Notifications' },
-              { id: 'account', label: 'Account Settings' }
+              { id: 'personal', label: 'Personal Information', icon: <UserIcon className="w-5 h-5 mr-2" /> },
+              { id: 'financial', label: 'Financial Profile', icon: <CreditCardIcon className="w-5 h-5 mr-2" /> },
+              { id: 'notifications', label: 'Notifications', icon: <BellIcon className="w-5 h-5 mr-2" /> },
+              { id: 'account', label: 'Account Settings', icon: <CogIcon className="w-5 h-5 mr-2" /> }
             ].map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ${
+                className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center ${
                   activeTab === tab.id
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    ? 'border-indigo-500 text-indigo-400'
+                    : 'border-transparent text-gray-400 hover:text-gray-300 hover:border-gray-600'
                 }`}
               >
+                {tab.icon}
                 {tab.label}
               </button>
             ))}
@@ -216,15 +229,15 @@ export default function ProfilePage() {
         </div>
         
         {/* Profile Content */}
-        <div className="bg-white rounded-xl shadow-md">
+        <div className="bg-gray-800 rounded-xl shadow-lg">
           <form onSubmit={handleSave}>
             {/* Personal Information */}
             {activeTab === 'personal' && (
               <div className="p-6">
-                <h2 className="text-xl font-semibold text-gray-800 mb-6">Personal Information</h2>
+                <h2 className="text-xl font-semibold text-indigo-300 mb-6">Personal Information</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="firstName" className="block text-sm font-medium text-gray-300 mb-1">
                       First Name
                     </label>
                     <input
@@ -233,12 +246,12 @@ export default function ProfilePage() {
                       name="firstName"
                       value={personalInfo.firstName}
                       onChange={handlePersonalInfoChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500"
                       required
                     />
                   </div>
                   <div>
-                    <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="lastName" className="block text-sm font-medium text-gray-300 mb-1">
                       Last Name
                     </label>
                     <input
@@ -247,12 +260,12 @@ export default function ProfilePage() {
                       name="lastName"
                       value={personalInfo.lastName}
                       onChange={handlePersonalInfoChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500"
                       required
                     />
                   </div>
                   <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-1">
                       Email Address
                     </label>
                     <input
@@ -261,7 +274,7 @@ export default function ProfilePage() {
                       name="email"
                       value={personalInfo.email}
                       onChange={handlePersonalInfoChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 bg-gray-50"
+                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-opacity-50"
                       readOnly
                     />
                     <p className="mt-1 text-xs text-gray-500">
@@ -269,7 +282,7 @@ export default function ProfilePage() {
                     </p>
                   </div>
                   <div>
-                    <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="phone" className="block text-sm font-medium text-gray-300 mb-1">
                       Phone Number
                     </label>
                     <input
@@ -278,11 +291,11 @@ export default function ProfilePage() {
                       name="phone"
                       value={personalInfo.phone}
                       onChange={handlePersonalInfoChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500"
                     />
                   </div>
                   <div>
-                    <label htmlFor="dateOfBirth" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="dateOfBirth" className="block text-sm font-medium text-gray-300 mb-1">
                       Date of Birth
                     </label>
                     <input
@@ -291,9 +304,29 @@ export default function ProfilePage() {
                       name="dateOfBirth"
                       value={personalInfo.dateOfBirth}
                       onChange={handlePersonalInfoChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500"
                     />
                   </div>
+                </div>
+                
+                <div className="mt-6 flex justify-end">
+                  <button
+                    type="submit"
+                    className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md font-medium transition-colors flex items-center"
+                    disabled={saveLoading}
+                  >
+                    {saveLoading ? (
+                      <>
+                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Saving...
+                      </>
+                    ) : (
+                      'Save Changes'
+                    )}
+                  </button>
                 </div>
               </div>
             )}
@@ -301,10 +334,10 @@ export default function ProfilePage() {
             {/* Financial Profile */}
             {activeTab === 'financial' && (
               <div className="p-6">
-                <h2 className="text-xl font-semibold text-gray-800 mb-6">Financial Profile</h2>
+                <h2 className="text-xl font-semibold text-indigo-300 mb-6">Financial Profile</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label htmlFor="annualIncome" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="annualIncome" className="block text-sm font-medium text-gray-300 mb-1">
                       Annual Income ($)
                     </label>
                     <input
@@ -313,11 +346,11 @@ export default function ProfilePage() {
                       name="annualIncome"
                       value={financialProfile.annualIncome}
                       onChange={handleFinancialProfileChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500"
                     />
                   </div>
                   <div>
-                    <label htmlFor="incomeRange" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="incomeRange" className="block text-sm font-medium text-gray-300 mb-1">
                       Income Range
                     </label>
                     <select
@@ -325,7 +358,7 @@ export default function ProfilePage() {
                       name="incomeRange"
                       value={financialProfile.incomeRange}
                       onChange={handleFinancialProfileChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500"
                     >
                       <option value="0-50000">$0 - $50,000</option>
                       <option value="50000-75000">$50,000 - $75,000</option>
@@ -335,7 +368,7 @@ export default function ProfilePage() {
                     </select>
                   </div>
                   <div>
-                    <label htmlFor="riskTolerance" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="riskTolerance" className="block text-sm font-medium text-gray-300 mb-1">
                       Risk Tolerance
                     </label>
                     <select
@@ -343,16 +376,15 @@ export default function ProfilePage() {
                       name="riskTolerance"
                       value={financialProfile.riskTolerance}
                       onChange={handleFinancialProfileChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500"
                     >
                       <option value="conservative">Conservative</option>
                       <option value="moderate">Moderate</option>
                       <option value="aggressive">Aggressive</option>
-                      <option value="very-aggressive">Very Aggressive</option>
                     </select>
                   </div>
                   <div>
-                    <label htmlFor="investmentHorizon" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="investmentHorizon" className="block text-sm font-medium text-gray-300 mb-1">
                       Investment Horizon (years)
                     </label>
                     <select
@@ -360,7 +392,7 @@ export default function ProfilePage() {
                       name="investmentHorizon"
                       value={financialProfile.investmentHorizon}
                       onChange={handleFinancialProfileChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500"
                     >
                       <option value="0-5">0-5 years</option>
                       <option value="5-10">5-10 years</option>
@@ -371,29 +403,27 @@ export default function ProfilePage() {
                 </div>
                 
                 <div className="mt-6">
-                  <span className="block text-sm font-medium text-gray-700 mb-2">
-                    Investment Goals
-                  </span>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <legend className="text-sm font-medium text-gray-300 mb-3">Investment Goals</legend>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-y-2">
                     {[
                       { id: 'retirement', label: 'Retirement' },
                       { id: 'wealth-building', label: 'Wealth Building' },
-                      { id: 'education', label: 'Education Funding' },
-                      { id: 'home-purchase', label: 'Home Purchase' },
-                      { id: 'passive-income', label: 'Passive Income' },
-                      { id: 'tax-optimization', label: 'Tax Optimization' }
+                      { id: 'education', label: 'Education' },
+                      { id: 'house', label: 'House Purchase' }
                     ].map((goal) => (
-                      <div key={goal.id} className="flex items-center">
-                        <input
-                          type="checkbox"
-                          id={`goal-${goal.id}`}
-                          name="investmentGoals"
-                          value={goal.id}
-                          checked={financialProfile.investmentGoals.includes(goal.id)}
-                          onChange={handleFinancialProfileChange}
-                          className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                        />
-                        <label htmlFor={`goal-${goal.id}`} className="ml-2 text-sm text-gray-700">
+                      <div key={goal.id} className="flex items-start">
+                        <div className="flex items-center h-5">
+                          <input
+                            type="checkbox"
+                            id={`goal-${goal.id}`}
+                            name="investmentGoals"
+                            value={goal.id}
+                            checked={financialProfile.investmentGoals.includes(goal.id)}
+                            onChange={handleFinancialProfileChange}
+                            className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-600 rounded bg-gray-700"
+                          />
+                        </div>
+                        <label htmlFor={`goal-${goal.id}`} className="ml-3 text-sm text-gray-300">
                           {goal.label}
                         </label>
                       </div>
@@ -401,38 +431,24 @@ export default function ProfilePage() {
                   </div>
                 </div>
                 
-                <div className="mt-6">
-                  <div className="flex items-center">
-                    <input
-                      type="checkbox"
-                      id="existingInvestments"
-                      name="existingInvestments"
-                      checked={financialProfile.existingInvestments}
-                      onChange={handleFinancialProfileChange}
-                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                    />
-                    <label htmlFor="existingInvestments" className="ml-2 text-sm text-gray-700">
-                      I already have investment accounts elsewhere
-                    </label>
-                  </div>
-                </div>
-                
-                <div className="mt-6">
-                  <label htmlFor="investmentExperience" className="block text-sm font-medium text-gray-700 mb-1">
-                    Investment Experience
-                  </label>
-                  <select
-                    id="investmentExperience"
-                    name="investmentExperience"
-                    value={financialProfile.investmentExperience}
-                    onChange={handleFinancialProfileChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                <div className="mt-6 flex justify-end">
+                  <button
+                    type="submit"
+                    className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md font-medium transition-colors flex items-center"
+                    disabled={saveLoading}
                   >
-                    <option value="beginner">Beginner</option>
-                    <option value="intermediate">Intermediate</option>
-                    <option value="advanced">Advanced</option>
-                    <option value="expert">Expert</option>
-                  </select>
+                    {saveLoading ? (
+                      <>
+                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Saving...
+                      </>
+                    ) : (
+                      'Save Changes'
+                    )}
+                  </button>
                 </div>
               </div>
             )}
@@ -440,7 +456,7 @@ export default function ProfilePage() {
             {/* Notification Preferences */}
             {activeTab === 'notifications' && (
               <div className="p-6">
-                <h2 className="text-xl font-semibold text-gray-800 mb-6">Notification Preferences</h2>
+                <h2 className="text-xl font-semibold text-indigo-300 mb-6">Notification Preferences</h2>
                 <div className="space-y-4">
                   {[
                     { id: 'emailNotifications', label: 'Email Notifications', description: 'Receive notifications via email' },
@@ -449,24 +465,44 @@ export default function ProfilePage() {
                     { id: 'recommendationUpdates', label: 'Recommendation Updates', description: 'Get notified when there are new investment recommendations' },
                     { id: 'newsDigest', label: 'News Digest', description: 'Receive weekly digest of financial news relevant to your portfolio' },
                     { id: 'aiInsights', label: 'AI Insights', description: 'Get personalized AI-generated insights about your finances' }
-                  ].map((pref) => (
-                    <div key={pref.id} className="flex items-start">
+                  ].map((notification) => (
+                    <div key={notification.id} className="flex items-start">
                       <div className="flex items-center h-5">
                         <input
                           type="checkbox"
-                          id={pref.id}
-                          name={pref.id}
-                          checked={notificationPrefs[pref.id]}
+                          id={notification.id}
+                          name={notification.id}
+                          checked={notificationPrefs[notification.id] || false}
                           onChange={handleNotificationPrefsChange}
-                          className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                          className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-600 rounded bg-gray-700"
                         />
                       </div>
                       <div className="ml-3 text-sm">
-                        <label htmlFor={pref.id} className="font-medium text-gray-700">{pref.label}</label>
-                        <p className="text-gray-500">{pref.description}</p>
+                        <label htmlFor={notification.id} className="font-medium text-gray-300">{notification.label}</label>
+                        <p className="text-gray-500">{notification.description}</p>
                       </div>
                     </div>
                   ))}
+                </div>
+                
+                <div className="mt-6 flex justify-end">
+                  <button
+                    type="submit"
+                    className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md font-medium transition-colors flex items-center"
+                    disabled={saveLoading}
+                  >
+                    {saveLoading ? (
+                      <>
+                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Saving...
+                      </>
+                    ) : (
+                      'Save Changes'
+                    )}
+                  </button>
                 </div>
               </div>
             )}
@@ -474,7 +510,7 @@ export default function ProfilePage() {
             {/* Account Settings */}
             {activeTab === 'account' && (
               <div className="p-6">
-                <h2 className="text-xl font-semibold text-gray-800 mb-6">Account Settings</h2>
+                <h2 className="text-xl font-semibold text-indigo-300 mb-6">Account Settings</h2>
                 
                 <div className="space-y-6">
                   <div>
@@ -486,11 +522,11 @@ export default function ProfilePage() {
                           name="twoFactorAuth"
                           checked={accountSettings.twoFactorAuth}
                           onChange={handleAccountSettingsChange}
-                          className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                          className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-600 rounded bg-gray-700"
                         />
                       </div>
                       <div className="ml-3 text-sm">
-                        <label htmlFor="twoFactorAuth" className="font-medium text-gray-700">Two-Factor Authentication</label>
+                        <label htmlFor="twoFactorAuth" className="font-medium text-gray-300">Two-Factor Authentication</label>
                         <p className="text-gray-500">Add an extra layer of security to your account</p>
                       </div>
                     </div>
@@ -505,12 +541,12 @@ export default function ProfilePage() {
                           name="darkMode"
                           checked={accountSettings.darkMode}
                           onChange={handleAccountSettingsChange}
-                          className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                          className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-600 rounded bg-gray-700"
                         />
                       </div>
                       <div className="ml-3 text-sm">
-                        <label htmlFor="darkMode" className="font-medium text-gray-700">Dark Mode</label>
-                        <p className="text-gray-500">Switch to dark theme for reduced eye strain</p>
+                        <label htmlFor="darkMode" className="font-medium text-gray-300">Dark Mode</label>
+                        <p className="text-gray-500">Use dark theme throughout the application</p>
                       </div>
                     </div>
                   </div>
@@ -524,18 +560,18 @@ export default function ProfilePage() {
                           name="dataSharing"
                           checked={accountSettings.dataSharing}
                           onChange={handleAccountSettingsChange}
-                          className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                          className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-600 rounded bg-gray-700"
                         />
                       </div>
                       <div className="ml-3 text-sm">
-                        <label htmlFor="dataSharing" className="font-medium text-gray-700">Data Sharing</label>
-                        <p className="text-gray-500">Allow analysis of your financial data to improve your experience</p>
+                        <label htmlFor="dataSharing" className="font-medium text-gray-300">Data Sharing</label>
+                        <p className="text-gray-500">Allow El Matador to use your data for better investment recommendations</p>
                       </div>
                     </div>
                   </div>
                   
                   <div>
-                    <label htmlFor="language" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="language" className="block text-sm font-medium text-gray-300 mb-1">
                       Language
                     </label>
                     <select
@@ -543,54 +579,37 @@ export default function ProfilePage() {
                       name="language"
                       value={accountSettings.language}
                       onChange={handleAccountSettingsChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500"
                     >
                       <option value="english">English</option>
                       <option value="spanish">Spanish</option>
                       <option value="french">French</option>
                       <option value="german">German</option>
-                      <option value="chinese">Chinese</option>
                     </select>
                   </div>
-                  
-                  <div className="pt-4 border-t border-gray-200">
-                    <h3 className="text-lg font-medium text-gray-900 mb-3">Danger Zone</h3>
-                    <button
-                      type="button"
-                      className="px-4 py-2 bg-red-50 text-red-700 hover:bg-red-100 rounded-md text-sm font-medium"
-                    >
-                      Delete Account
-                    </button>
-                    <p className="mt-1 text-xs text-gray-500">
-                      Once you delete your account, it cannot be undone. All your data will be permanently removed.
-                    </p>
-                  </div>
+                </div>
+                
+                <div className="mt-6 flex justify-end">
+                  <button
+                    type="submit"
+                    className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md font-medium transition-colors flex items-center"
+                    disabled={saveLoading}
+                  >
+                    {saveLoading ? (
+                      <>
+                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Saving...
+                      </>
+                    ) : (
+                      'Save Changes'
+                    )}
+                  </button>
                 </div>
               </div>
             )}
-            
-            {/* Save Button */}
-            <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-end rounded-b-xl">
-              <button
-                type="submit"
-                className={`px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
-                  saveLoading ? 'opacity-75 cursor-not-allowed' : ''
-                }`}
-                disabled={saveLoading}
-              >
-                {saveLoading ? (
-                  <span className="flex items-center">
-                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Saving...
-                  </span>
-                ) : (
-                  'Save Changes'
-                )}
-              </button>
-            </div>
           </form>
         </div>
       </div>

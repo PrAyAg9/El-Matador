@@ -130,7 +130,7 @@ export default function ElMatadorServicesPage() {
       </div>
       
       {/* Services Grid */}
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <div id="el-matador-services" className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
         {filteredServices.map((service) => (
           <div
             key={service.id}

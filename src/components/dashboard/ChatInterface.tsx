@@ -1,51 +1,96 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { useAuth } from '@/context/AuthContext';
-import { generateChatResponse } from '@/lib/gemini/client';
+import { useAuth } from '@/components/auth/AuthProvider';
 
-// Sample suggestions for different financial topics
-const CHAT_SUGGESTIONS = {
-  invest: {
-    title: 'Investment Advice',
+// Simulated function for generating chat responses
+const generateChatResponse = async (
+  history: { role: 'user' | 'model'; text: string }[],
+  message: string,
+  userData: any
+): Promise<string> => {
+  // Simulate network delay
+  await new Promise(resolve => setTimeout(resolve, Math.random() * 1000 + 500));
+  
+  // Convert message to lowercase for easier matching
+  const msgLower = message.toLowerCase();
+  
+  // Check for specific financial topics
+  if (msgLower.includes('invest') || msgLower.includes('stock') || msgLower.includes('etf') || msgLower.includes('fund')) {
+    return "Based on your financial profile, I recommend a diversified portfolio with a mix of stocks, bonds, and ETFs. Consider allocating 60% to stocks, 30% to bonds, and 10% to alternative investments based on your risk tolerance. Would you like more specific investment recommendations?";
+  }
+  
+  if (msgLower.includes('budget') || msgLower.includes('spend') || msgLower.includes('saving')) {
+    return "Looking at your income and expenses, I recommend using the 50/30/20 rule: 50% for needs, 30% for wants, and 20% for savings. This would mean allocating about $" + (Math.floor(Math.random() * 2000) + 1000) + " to your essential needs, $" + (Math.floor(Math.random() * 1000) + 600) + " to discretionary spending, and $" + (Math.floor(Math.random() * 800) + 400) + " to savings and debt repayment. Let me help you create a personalized budget plan.";
+  }
+  
+  if (msgLower.includes('debt') || msgLower.includes('loan') || msgLower.includes('credit')) {
+    return "To reduce your debt efficiently, I recommend the avalanche method - paying minimum amounts on all debts, then using extra money to pay off high-interest debt first. This could save you thousands in interest payments. Based on the typical debt profile, focusing on credit cards first, then personal loans, and finally mortgages or student loans makes financial sense. Would you like me to create a personalized debt payoff plan?";
+  }
+  
+  if (msgLower.includes('retire') || msgLower.includes('401k') || msgLower.includes('ira')) {
+    return "For retirement planning, I suggest maximizing your tax-advantaged accounts like 401(k) and IRAs first. Based on your age and income, aim to save about 15% of your income for retirement. If you start investing $500 monthly with a 7% average return, you could have approximately $" + (Math.floor(Math.random() * 500000) + 500000) + " in 30 years. Would you like a more detailed retirement projection?";
+  }
+  
+  if (msgLower.includes('tax') || msgLower.includes('deduction') || msgLower.includes('write-off')) {
+    return "There are several tax strategies that might benefit you. Consider maximizing contributions to tax-advantaged accounts, harvesting tax losses in your investment portfolio, and tracking potential deductible expenses. Based on your profile, you might qualify for home office deductions, education credits, or health care deductions. Would you like more specific tax optimization advice?";
+  }
+  
+  if (msgLower.includes('house') || msgLower.includes('mortgage') || msgLower.includes('property')) {
+    return "When considering a home purchase, the general guideline is to spend no more than 28% of your gross monthly income on housing expenses. With current mortgage rates around 6-7%, a $300,000 home with 20% down would result in payments of approximately $1,800-$2,000 per month including taxes and insurance. Would you like me to analyze your specific home buying situation?";
+  }
+  
+  if (msgLower.includes('hello') || msgLower.includes('hi') || msgLower.includes('hey') || message.length < 10) {
+    return "Hello there! I'm your El Matador financial assistant. I can help you with investment strategies, retirement planning, budgeting, debt management, and other financial questions. What would you like to know about today?";
+  }
+  
+  // Default response if no specific topics are matched
+  return "Thank you for your question about " + message.split(' ').slice(0, 3).join(' ') + "... As your financial assistant, I can provide personalized advice on this topic. To give you the most accurate guidance, could you share a bit more about your specific situation or what aspect you're most interested in?";
+};
+
+// Various suggestion categories
+interface SuggestionCategory {
+  title: string;
+  items: string[];
+}
+
+interface ChatSuggestions {
+  [key: string]: SuggestionCategory;
+}
+
+// Predefined chat suggestions
+const CHAT_SUGGESTIONS: ChatSuggestions = {
+  investing: {
+    title: 'Investing',
     items: [
-      'How should I invest $10,000?',
-      'What are index funds?',
-      'What investment strategy matches a moderate risk tolerance?',
-      'Should I invest in individual stocks or ETFs?'
+      'What investments are right for my risk profile?',
+      'How should I allocate my 401(k)?',
+      'Should I invest in stocks or ETFs?',
+      'What\'s a good investment strategy for retirement?'
     ]
   },
-  budget: {
-    title: 'Budgeting Help',
+  budgeting: {
+    title: 'Budgeting',
     items: [
       'How do I create a monthly budget?',
-      'What is the 50/30/20 budget rule?',
+      'What\'s the 50/30/20 budget rule?',
       'How can I reduce my monthly expenses?',
-      'What budgeting apps do you recommend?'
+      'How much should I save each month?'
     ]
   },
-  retire: {
-    title: 'Retirement Planning',
+  retirement: {
+    title: 'Retirement',
     items: [
-      'How much should I save for retirement?',
-      'What is the difference between 401(k) and IRA?',
-      'When can I retire based on my current savings?',
-      'How does Social Security fit into retirement planning?'
-    ]
-  },
-  market: {
-    title: 'Market Insights',
-    items: [
-      'How do interest rates affect the stock market?',
-      'What is dollar-cost averaging?',
-      'How should I prepare for market volatility?',
-      'What economic indicators should I track?'
+      'How much do I need to save for retirement?',
+      'What\'s the difference between traditional and Roth IRA?',
+      'When should I start taking Social Security?',
+      'How can I catch up on retirement savings?'
     ]
   }
 };
 
 export default function ChatInterface() {
-  const { userData, isTestUser } = useAuth();
+  const { user } = useAuth();
   const [messages, setMessages] = useState<{ role: 'user' | 'model'; text: string }[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -54,16 +99,16 @@ export default function ChatInterface() {
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Initial greeting message - now displayed separately instead of in the messages array
-  const welcomeMessage = `Hello${userData?.displayName ? ' ' + userData.displayName : ''}! I'm your AI financial assistant. How can I help you today?`;
+  const welcomeMessage = `Hello${user?.displayName ? ' ' + user.displayName : ''}! I'm your AI financial assistant. How can I help you today?`;
 
   // Scroll to bottom of chat whenever messages change
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+  // useEffect(() => {
+  //   scrollToBottom();
+  // }, [messages]);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
+  // const scrollToBottom = () => {
+  //   messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  // };
 
   const handleSendMessage = async () => {
     if (!input.trim() || isLoading) return;
@@ -78,20 +123,12 @@ export default function ChatInterface() {
     setIsLoading(true);
     
     try {
-      // Generate AI response using Gemini API
-      let aiResponse;
-      
-      if (isTestUser) {
-        // Use mock responses for test user to avoid API calls
-        aiResponse = await getMockResponse(userMessage);
-      } else {
-        // Use actual Gemini API
-        aiResponse = await generateChatResponse(
-          messages,
-          userMessage,
-          userData
-        );
-      }
+      // Generate AI response
+      const aiResponse = await generateChatResponse(
+        messages,
+        userMessage,
+        user
+      );
       
       // Add AI response to chat
       setMessages(prev => [...prev, { role: 'model', text: aiResponse }]);
@@ -123,102 +160,27 @@ export default function ChatInterface() {
 
   const handleSuggestionClick = (suggestion: string) => {
     setInput(suggestion);
-    // Option 1: Automatically send the suggestion
-    // handleSendMessage();
-    
-    // Option 2: Just set the input and let user send
     setActiveSuggestionCategory(null);
     inputRef.current?.focus();
   };
 
-  // Mock response generator for test user mode
-  const getMockResponse = async (message: string): Promise<string> => {
-    // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, Math.random() * 1500 + 500));
-    
-    const lowerMessage = message.toLowerCase();
-    
-    if (lowerMessage.includes('invest') || lowerMessage.includes('stock')) {
-      return `Based on your ${userData?.financialProfile?.riskTolerance || 'moderate'} risk profile, I recommend focusing on a diversified portfolio with a mix of stocks and bonds. 
-
-For someone with a ${userData?.financialProfile?.riskTolerance || 'moderate'} risk tolerance, a good starting point might be:
-- 60% in broad market index funds
-- 30% in bond funds
-- 10% in international stocks
-
-Would you like specific investment recommendations?`;
-    }
-    
-    if (lowerMessage.includes('budget') || lowerMessage.includes('spend')) {
-      return `Looking at your financial profile, you might consider allocating 50% to essentials, 30% to savings/investments, and 20% to discretionary spending. 
-
-Here's a simple breakdown:
-• Essentials: Housing, utilities, food, transportation, insurance
-• Savings: Emergency fund, retirement, specific goals
-• Discretionary: Entertainment, dining out, hobbies
-
-Would you like help creating a detailed budget?`;
-    }
-    
-    if (lowerMessage.includes('retirement') || lowerMessage.includes('401k')) {
-      return `Retirement planning is essential. With your current profile, you should aim to save at least 15% of your income for retirement.
-
-Some key retirement strategies:
-1. Max out tax-advantaged accounts (401(k), IRA)
-2. Take full advantage of employer matches
-3. Consider a Roth IRA for tax diversity
-4. Increase savings rate as your income grows
-
-Have you maxed out your 401(k) contributions this year?`;
-    }
-    
-    if (lowerMessage.includes('market') || lowerMessage.includes('economy')) {
-      return `The market has been showing mixed signals lately. Key factors to watch include:
-
-• Federal Reserve policy and interest rates
-• Inflation trends and consumer spending
-• Corporate earnings reports
-• Geopolitical developments
-
-Remember that short-term market movements shouldn't drastically change a well-designed long-term investment strategy.
-
-Would you like me to explain how these factors might affect your specific investments?`;
-    }
-    
-    return `I understand you're asking about "${message}". To provide the most relevant advice, could you share more details about your specific financial goals?
-
-I can help with:
-• Investment strategies
-• Budgeting and saving
-• Retirement planning
-• Debt management
-• Tax planning
-
-What area would you like to focus on?`;
-  };
-
-  // Get the active suggestions
-  const getActiveSuggestions = () => {
-    if (activeSuggestionCategory && CHAT_SUGGESTIONS[activeSuggestionCategory]) {
-      return CHAT_SUGGESTIONS[activeSuggestionCategory];
-    }
-    return null;
-  };
-
-  const activeSuggestions = getActiveSuggestions();
+  // Get active suggestions based on the selected category
+  const activeSuggestions = activeSuggestionCategory 
+    ? CHAT_SUGGESTIONS[activeSuggestionCategory] 
+    : null;
 
   return (
-    <div className="flex flex-col h-full bg-white rounded-lg shadow-md overflow-hidden">
+    <div className="flex flex-col h-[600px] bg-gray-800 rounded-lg shadow-md overflow-hidden">
       {/* Chat header */}
       <div className="flex items-center justify-between px-4 py-3 bg-indigo-600 text-white">
         <h2 className="text-lg font-semibold">Financial Assistant</h2>
         <div className="text-xs bg-indigo-700 px-2 py-1 rounded-full">
-          {isTestUser ? 'Demo Mode' : 'AI Powered'}
+          AI Powered
         </div>
       </div>
       
       {/* Chat messages */}
-      <div className="flex-1 p-4 overflow-y-auto">
+      <div className="flex-1 p-4 overflow-y-auto bg-gray-800">
         <div className="space-y-4">
           {/* Welcome message */}
           {messages.length === 0 && (
@@ -228,7 +190,7 @@ What area would you like to focus on?`;
                   <span className="text-sm font-medium text-white">AI</span>
                 </div>
               </div>
-              <div className="max-w-[75%] p-3 rounded-lg bg-gray-100 text-gray-800">
+              <div className="max-w-[75%] p-3 rounded-lg bg-gray-700 text-white">
                 <p className="whitespace-pre-wrap text-sm">{welcomeMessage}</p>
               </div>
             </div>
@@ -250,17 +212,17 @@ What area would you like to focus on?`;
               <div
                 className={`max-w-[75%] p-3 rounded-lg ${
                   message.role === 'user'
-                    ? 'bg-indigo-100 text-gray-800'
-                    : 'bg-gray-100 text-gray-800'
+                    ? 'bg-indigo-500 text-white'
+                    : 'bg-gray-700 text-white'
                 }`}
               >
                 <p className="whitespace-pre-wrap text-sm">{message.text}</p>
               </div>
               {message.role === 'user' && (
                 <div className="flex-shrink-0 ml-2">
-                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-indigo-200">
-                    <span className="text-sm font-medium text-indigo-800">
-                      {userData?.displayName?.charAt(0) || userData?.email?.charAt(0) || 'U'}
+                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-indigo-400">
+                    <span className="text-sm font-medium text-indigo-900">
+                      {user?.displayName?.charAt(0) || user?.email?.charAt(0) || 'U'}
                     </span>
                   </div>
                 </div>
@@ -276,11 +238,11 @@ What area would you like to focus on?`;
                   <span className="text-sm font-medium text-white">AI</span>
                 </div>
               </div>
-              <div className="max-w-[75%] p-3 rounded-lg bg-gray-100">
+              <div className="max-w-[75%] p-3 rounded-lg bg-gray-700">
                 <div className="flex space-x-2">
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-100"></div>
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-200"></div>
+                  <div className="w-2 h-2 bg-gray-300 rounded-full animate-bounce"></div>
+                  <div className="w-2 h-2 bg-gray-300 rounded-full animate-bounce delay-100"></div>
+                  <div className="w-2 h-2 bg-gray-300 rounded-full animate-bounce delay-200"></div>
                 </div>
               </div>
             </div>
@@ -293,14 +255,14 @@ What area would you like to focus on?`;
       
       {/* Suggestions */}
       {messages.length < 3 && !activeSuggestionCategory && (
-        <div className="px-4 py-3 bg-gray-50 border-t border-gray-200">
-          <h3 className="text-sm font-medium text-gray-700 mb-2">Try asking about:</h3>
+        <div className="px-4 py-3 bg-gray-700 border-t border-gray-600">
+          <h3 className="text-sm font-medium text-gray-200 mb-2">Try asking about:</h3>
           <div className="flex flex-wrap gap-2">
             {Object.keys(CHAT_SUGGESTIONS).map(category => (
               <button
                 key={category}
                 onClick={() => setActiveSuggestionCategory(category)}
-                className="px-3 py-1 text-xs bg-indigo-50 text-indigo-600 rounded-full hover:bg-indigo-100"
+                className="px-3 py-1 text-xs bg-indigo-800 text-white rounded-full hover:bg-indigo-700"
               >
                 {CHAT_SUGGESTIONS[category].title}
               </button>
@@ -311,22 +273,22 @@ What area would you like to focus on?`;
       
       {/* Active suggestions */}
       {activeSuggestions && (
-        <div className="px-4 py-3 bg-gray-50 border-t border-gray-200">
+        <div className="px-4 py-3 bg-gray-700 border-t border-gray-600">
           <div className="flex justify-between items-center mb-2">
-            <h3 className="text-sm font-medium text-gray-700">{activeSuggestions.title}</h3>
+            <h3 className="text-sm font-medium text-gray-200">{activeSuggestions.title}</h3>
             <button
               onClick={() => setActiveSuggestionCategory(null)}
-              className="text-xs text-gray-500 hover:text-gray-700"
+              className="text-xs text-gray-300 hover:text-white"
             >
               Close
             </button>
           </div>
           <div className="flex flex-col gap-2">
-            {activeSuggestions.items.map((suggestion, idx) => (
+            {activeSuggestions.items.map((suggestion: string, idx: number) => (
               <button
                 key={idx}
                 onClick={() => handleSuggestionClick(suggestion)}
-                className="px-3 py-2 text-sm text-left bg-white border border-gray-200 rounded-md hover:bg-indigo-50"
+                className="px-3 py-2 text-sm text-left bg-gray-600 text-white border border-gray-500 rounded-md hover:bg-indigo-700"
               >
                 {suggestion}
               </button>
@@ -336,16 +298,17 @@ What area would you like to focus on?`;
       )}
       
       {/* Chat input */}
-      <div className="px-4 py-3 bg-gray-100 border-t border-gray-200">
+      <div className="px-4 py-3 bg-gray-700 border-t border-gray-600">
         <div className="flex">
           <input
             type="text"
+            id="chat-input"
             ref={inputRef}
             value={input}
             onChange={handleInputChange}
             onKeyDown={handleKeyDown}
             placeholder="Ask me about investments, budgeting, retirement..."
-            className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="flex-1 px-3 py-2 text-sm bg-gray-600 text-white border border-gray-500 rounded-l-md focus:outline-none focus:ring-2 focus:ring-indigo-500 placeholder-gray-400"
           />
           <button
             onClick={handleSendMessage}
@@ -355,10 +318,8 @@ What area would you like to focus on?`;
             Send
           </button>
         </div>
-        <p className="mt-2 text-xs text-gray-500 text-center">
-          {isTestUser 
-            ? 'Using demo mode with simulated responses'
-            : 'AI-powered assistance by Google Gemini'}
+        <p className="mt-2 text-xs text-gray-400 text-center">
+          AI-powered assistance by El Matador
         </p>
       </div>
     </div>

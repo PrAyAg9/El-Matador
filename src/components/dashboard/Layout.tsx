@@ -2,52 +2,73 @@
 
 import { ReactNode, useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter, usePathname } from 'next/navigation';
 import { signOutUser } from '@/lib/firebase/auth';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/components/auth/AuthProvider';
+import dynamic from 'next/dynamic';
+
+// Dynamically import ElMatadorModal with no SSR
+const ElMatadorModal = dynamic(
+  () => import('./ElMatadorModal'),
+  { ssr: false }
+);
 
 interface DashboardLayoutProps {
   children: ReactNode;
 }
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
-  const { currentUser, userData } = useAuth();
+  const { user } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [aiModeEnabled, setAiModeEnabled] = useState(false);
   const [showAIModePrompt, setShowAIModePrompt] = useState(false);
+  const [showElMatadorModal, setShowElMatadorModal] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+
+  // Set isMounted to true on client side
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   // Show AI mode prompt on first load
   useEffect(() => {
+    // Only run on client-side
+    if (typeof window === 'undefined') return;
+    
     const hasSeenAIPrompt = localStorage.getItem('hasSeenAIPrompt');
     if (!hasSeenAIPrompt) {
       setTimeout(() => {
         setShowAIModePrompt(true);
       }, 1000);
     }
+
+    // Check if AI mode was previously enabled
+    const aiModeEnabledString = localStorage.getItem('aiModeEnabled');
+    if (aiModeEnabledString === 'true') {
+      setAiModeEnabled(true);
+    }
   }, []);
+
+  // Show El Matador modal on dashboard load
+  useEffect(() => {
+    // Only run on client-side
+    if (typeof window === 'undefined') return;
+    
+    if (pathname === '/dashboard') {
+      const hasSeenElMatadorModal = localStorage.getItem('hasSeenElMatadorModal');
+      if (!hasSeenElMatadorModal) {
+        setShowElMatadorModal(true);
+      }
+    }
+  }, [pathname]);
 
   const handleSignOut = async () => {
     try {
-      // Check if this is a test user bypass
-      const bypassAuth = localStorage.getItem('bypassAuth');
-      if (bypassAuth === 'true') {
-        console.log('Logging out test user...');
-        localStorage.removeItem('bypassAuth');
-        localStorage.removeItem('testUser');
-        localStorage.removeItem('cachedUserInfo');
-        
-        // Clear the bypass cookie
-        document.cookie = "bypassAuth=;path=/;expires=Thu, 01 Jan 1970 00:00:01 GMT";
-        
-        router.push('/');
-        return;
-      }
-      
-      // Normal sign out process
       await signOutUser();
-      router.push('/auth/login');
+      router.push('/login');
     } catch (error) {
       console.error('Error signing out:', error);
     }
@@ -56,13 +77,17 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const enableAIMode = () => {
     setAiModeEnabled(true);
     setShowAIModePrompt(false);
-    localStorage.setItem('hasSeenAIPrompt', 'true');
-    localStorage.setItem('aiModeEnabled', 'true');
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('hasSeenAIPrompt', 'true');
+      localStorage.setItem('aiModeEnabled', 'true');
+    }
   };
 
   const dismissAIPrompt = () => {
     setShowAIModePrompt(false);
-    localStorage.setItem('hasSeenAIPrompt', 'true');
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('hasSeenAIPrompt', 'true');
+    }
   };
 
   const navigation = [
@@ -88,8 +113,8 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     },
     { 
       name: 'Investments', 
-      href: '/investments', 
-      current: pathname === '/investments',
+      href: '/dashboard/investments', 
+      current: pathname === '/dashboard/investments',
       icon: (
         <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
           <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z" />
@@ -109,8 +134,8 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     },
     { 
       name: 'Profile', 
-      href: '/profile', 
-      current: pathname === '/profile',
+      href: '/dashboard/profile', 
+      current: pathname === '/dashboard/profile',
       icon: (
         <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
           <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
@@ -152,20 +177,11 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
   return (
     <div className="min-h-screen bg-gray-900">
+      {/* Show El Matador modal */}
+      {showElMatadorModal && <ElMatadorModal />}
+      
       {/* Show AI mode prompt */}
       {showAIModePrompt && <AIModePrompt />}
-
-      {/* AI Mode Indicator */}
-      {aiModeEnabled && (
-        <div className="fixed top-0 left-0 right-0 z-20 flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-indigo-600">
-          <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-            <path fillRule="evenodd" d="M6.625 2.655A9 9 0 0119 11a1 1 0 11-2 0 7 7 0 00-9.625-6.492 1 1 0 11-.75-1.853zM4.662 4.959A1 1 0 014.75 6.37 6.97 6.97 0 003 11a1 1 0 11-2 0 8.97 8.97 0 012.25-5.953 1 1 0 011.412-.088z" clipRule="evenodd" />
-            <path fillRule="evenodd" d="M5 11a5 5 0 1110 0 1 1 0 11-2 0 3 3 0 10-6 0c0 1.677-.345 3.276-.968 4.729a1 1 0 11-1.838-.789A9.964 9.964 0 005 11zm8.921 2.012a1 1 0 01.831 1.145 19.86 19.86 0 01-.545 2.436 1 1 0 11-1.92-.558c.207-.713.371-1.445.49-2.192a1 1 0 011.144-.83z" clipRule="evenodd" />
-            <path fillRule="evenodd" d="M10 10a1 1 0 011 1c0 2.236-.46 4.368-1.29 6.304a1 1 0 01-1.838-.789A13.952 13.952 0 009 11a1 1 0 011-1z" clipRule="evenodd" />
-          </svg>
-          El Matador Mode Enabled
-        </div>
-      )}
 
       <div className="flex h-screen overflow-hidden">
         {/* Sidebar */}
@@ -174,11 +190,15 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             <div className="flex flex-col flex-grow pt-5 overflow-y-auto bg-gray-800 border-r border-gray-700">
               <div className="flex items-center flex-shrink-0 px-4">
                 <div className="flex items-center">
-                  <img 
-                    src="/matador.png" 
-                    alt="El Matador Logo" 
-                    className="h-10 w-auto mr-3" 
-                  />
+                  <div className="h-10 w-10 relative mr-3">
+                    <Image 
+                      src="/matador.png" 
+                      alt="El Matador Logo" 
+                      width={40}
+                      height={40}
+                      className="object-contain"
+                    />
+                  </div>
                   <span className="text-xl font-bold text-indigo-400">El Matador</span>
                 </div>
               </div>
@@ -203,54 +223,34 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                     </Link>
                   ))}
                 </nav>
-                {!aiModeEnabled && (
-                  <div className="p-4 mt-6 bg-gray-700 rounded-lg">
-                    <div className="flex">
-                      <div className="flex-shrink-0">
-                        <svg className="w-5 h-5 text-indigo-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                        </svg>
-                      </div>
-                      <div className="ml-3">
-                        <h3 className="text-sm font-medium text-indigo-300">El Matador Mode</h3>
-                        <div className="mt-2 text-sm text-gray-300">
-                          <p>
-                            Enhance your experience with our AI-powered assistant.
-                          </p>
-                        </div>
-                        <div className="mt-3">
-                          <button
-                            type="button"
-                            onClick={enableAIMode}
-                            className="text-sm font-medium text-indigo-400 hover:text-indigo-300"
-                          >
-                            Enable El Matador <span aria-hidden="true">&rarr;</span>
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
               </div>
-              
-              <div className="p-4 mt-auto border-t border-gray-700">
+
+              {/* User Profile & Logout */}
+              <div className="flex flex-shrink-0 p-4 border-t border-gray-700">
                 <div className="flex items-center">
                   <div className="flex-shrink-0">
-                    <div className="w-8 h-8 bg-gray-700 rounded-full flex items-center justify-center">
-                      <span className="text-sm font-medium text-indigo-400">
-                        {currentUser?.displayName?.charAt(0) || currentUser?.email?.charAt(0) || 'U'}
-                      </span>
+                    <div className="w-8 h-8 bg-indigo-600 rounded-full flex items-center justify-center">
+                      {user?.photoURL ? (
+                        <img src={user.photoURL} alt="User avatar" className="w-8 h-8 rounded-full" />
+                      ) : (
+                        <span className="text-white text-sm font-medium">
+                          {user?.displayName?.charAt(0) || user?.email?.charAt(0) || 'U'}
+                        </span>
+                      )}
                     </div>
                   </div>
                   <div className="ml-3">
-                    <p className="text-sm font-medium text-gray-300 truncate">
-                      {currentUser?.displayName || currentUser?.email}
+                    <p className="text-sm font-medium text-white truncate">
+                      {user?.displayName || user?.email || 'User'}
                     </p>
                     <button
                       onClick={handleSignOut}
-                      className="text-xs font-medium text-gray-400 hover:text-gray-300"
+                      className="text-xs font-medium text-indigo-400 hover:text-indigo-300 flex items-center mt-1"
                     >
-                      Sign out
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 001 1h12a1 1 0 001-1V7.414l-5-5H3zm4.707 5.707a1 1 0 00-1.414-1.414l-3 3a1 1 0 000 1.414l3 3a1 1 0 001.414-1.414L6.414 12H12a1 1 0 100-2H6.414l1.293-1.293z" clipRule="evenodd" />
+                      </svg>
+                      Sign Out
                     </button>
                   </div>
                 </div>
@@ -259,127 +259,141 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           </div>
         </div>
 
-        {/* Mobile header */}
-        <div className="flex flex-col flex-1 w-0 overflow-hidden">
-          <div className="relative z-10 flex h-16 flex-shrink-0 border-b border-gray-700 bg-gray-800 md:hidden">
-            <button
-              type="button"
-              className="px-4 text-gray-400 border-r border-gray-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500 md:hidden"
-              onClick={() => setMobileMenuOpen(true)}
-            >
-              <span className="sr-only">Open sidebar</span>
-              <svg className="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
+        {/* Mobile sidebar toggle */}
+        <div className="md:hidden fixed top-0 left-0 z-20 p-4">
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="text-gray-300 hover:text-white focus:outline-none"
+          >
+            {mobileMenuOpen ? (
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
-            </button>
-            <div className="flex justify-between flex-1 px-4">
-              <div className="flex flex-1">
-                <div className="flex items-center w-full md:ml-0">
-                  <Link href="/dashboard" className="flex items-center">
-                    <img 
-                      src="/matador.png" 
-                      alt="El Matador Logo" 
-                      className="h-8 w-auto mr-2" 
-                    />
+            ) : (
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            )}
+          </button>
+        </div>
+
+        {/* Mobile sidebar */}
+        {mobileMenuOpen && (
+          <div className="fixed inset-0 z-10 flex md:hidden">
+            <div className="fixed inset-0 bg-gray-900 bg-opacity-75" onClick={() => setMobileMenuOpen(false)}></div>
+            <div className="relative flex flex-col flex-1 w-full max-w-xs bg-gray-800">
+              <div className="absolute top-0 right-0 p-1">
+                <button
+                  className="flex items-center justify-center w-10 h-10 rounded-full focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <span className="sr-only">Close sidebar</span>
+                  <svg className="w-6 h-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              
+              <div className="flex-1 h-0 pt-5 pb-4 overflow-y-auto">
+                <div className="flex items-center flex-shrink-0 px-4">
+                  <div className="flex items-center">
+                    <div className="h-10 w-10 relative mr-3">
+                      <Image 
+                        src="/matador.png" 
+                        alt="El Matador Logo" 
+                        width={40}
+                        height={40}
+                        className="object-contain"
+                      />
+                    </div>
                     <span className="text-xl font-bold text-indigo-400">El Matador</span>
-                  </Link>
+                  </div>
+                </div>
+                <nav className="px-2 mt-8 space-y-1">
+                  {navigation.map((item) => (
+                    <Link
+                      key={item.name}
+                      href={item.href}
+                      className={`group flex items-center px-4 py-3 text-sm font-medium rounded-md ${
+                        item.current
+                          ? 'bg-gray-700 text-indigo-400'
+                          : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                      }`}
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      <div className={`mr-3 ${
+                        item.current ? 'text-indigo-400' : 'text-gray-400 group-hover:text-gray-300'
+                      }`}>
+                        {item.icon}
+                      </div>
+                      {item.name}
+                    </Link>
+                  ))}
+                </nav>
+              </div>
+              
+              {/* User Profile & Logout on mobile */}
+              <div className="flex flex-shrink-0 p-4 border-t border-gray-700">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0">
+                    <div className="w-8 h-8 bg-indigo-600 rounded-full flex items-center justify-center">
+                      {user?.photoURL ? (
+                        <img src={user.photoURL} alt="User avatar" className="w-8 h-8 rounded-full" />
+                      ) : (
+                        <span className="text-white text-sm font-medium">
+                          {user?.displayName?.charAt(0) || user?.email?.charAt(0) || 'U'}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="ml-3">
+                    <p className="text-sm font-medium text-white truncate">
+                      {user?.displayName || user?.email || 'User'}
+                    </p>
+                    <button
+                      onClick={() => {
+                        handleSignOut();
+                        setMobileMenuOpen(false);
+                      }}
+                      className="text-xs font-medium text-indigo-400 hover:text-indigo-300 flex items-center mt-1"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 001 1h12a1 1 0 001-1V7.414l-5-5H3zm4.707 5.707a1 1 0 00-1.414-1.414l-3 3a1 1 0 000 1.414l3 3a1 1 0 001.414-1.414L6.414 12H12a1 1 0 100-2H6.414l1.293-1.293z" clipRule="evenodd" />
+                      </svg>
+                      Sign Out
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
+        )}
 
-          {/* Main content */}
-          <main className="relative flex-1 overflow-y-auto focus:outline-none bg-gray-800">
+        {/* Main content */}
+        <div className="flex flex-col flex-1 w-0 overflow-hidden">
+          <main className="relative flex-1 overflow-y-auto focus:outline-none">
+            {/* Show the El Matador logo for mobile users at the top of the content */}
+            <div className="md:hidden flex items-center justify-center pt-6 pb-2">
+              <div className="flex items-center">
+                <div className="h-10 w-10 relative mr-2">
+                  <Image 
+                    src="/matador.png" 
+                    alt="El Matador Logo" 
+                    width={40}
+                    height={40}
+                    className="object-contain"
+                  />
+                </div>
+                <span className="text-xl font-bold text-indigo-400">El Matador</span>
+              </div>
+            </div>
+            
             <div className="py-6">
               <div className="px-4 mx-auto sm:px-6 md:px-8">
-                <div className="text-white">{children}</div>
+                {children}
               </div>
             </div>
           </main>
-          
-          {/* Mobile menu, show/hide based on mobileMenuOpen state */}
-          {mobileMenuOpen && (
-            <div className="fixed inset-0 z-40 flex md:hidden">
-              {/* Overlay */}
-              <div 
-                className="fixed inset-0 bg-black bg-opacity-75"
-                onClick={() => setMobileMenuOpen(false)}
-              />
-              
-              {/* Sidebar */}
-              <div className="relative flex flex-col flex-1 w-full max-w-xs pt-5 pb-4 bg-gray-800">
-                <div className="absolute top-0 right-0 pt-2 -mr-12">
-                  <button
-                    type="button"
-                    className="flex items-center justify-center w-10 h-10 ml-1 rounded-full focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    <span className="sr-only">Close sidebar</span>
-                    <svg className="w-6 h-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                </div>
-                
-                <div className="flex items-center flex-shrink-0 px-4">
-                  <div className="flex items-center">
-                    <img 
-                      src="/matador.png" 
-                      alt="El Matador Logo" 
-                      className="h-10 w-auto mr-3" 
-                    />
-                    <span className="text-xl font-bold text-indigo-400">El Matador</span>
-                  </div>
-                </div>
-                <div className="flex flex-col flex-grow px-4 mt-8 overflow-y-auto">
-                  <nav className="flex-1 space-y-1">
-                    {navigation.map((item) => (
-                      <Link
-                        key={item.name}
-                        href={item.href}
-                        className={`group flex items-center px-4 py-3 text-sm font-medium rounded-md ${
-                          item.current
-                            ? 'bg-gray-700 text-indigo-400'
-                            : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                        }`}
-                        onClick={() => setMobileMenuOpen(false)}
-                      >
-                        <div className={`mr-3 ${
-                          item.current ? 'text-indigo-400' : 'text-gray-400 group-hover:text-gray-300'
-                        }`}>
-                          {item.icon}
-                        </div>
-                        {item.name}
-                      </Link>
-                    ))}
-                  </nav>
-                </div>
-                
-                <div className="p-4 mt-auto border-t border-gray-700">
-                  <div className="flex items-center">
-                    <div className="flex-shrink-0">
-                      <div className="w-8 h-8 bg-gray-700 rounded-full flex items-center justify-center">
-                        <span className="text-sm font-medium text-indigo-400">
-                          {currentUser?.displayName?.charAt(0) || currentUser?.email?.charAt(0) || 'U'}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="ml-3">
-                      <p className="text-sm font-medium text-gray-300 truncate">
-                        {currentUser?.displayName || currentUser?.email}
-                      </p>
-                      <button
-                        onClick={handleSignOut}
-                        className="text-xs font-medium text-gray-400 hover:text-gray-300"
-                      >
-                        Sign out
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </div>

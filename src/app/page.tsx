@@ -1,294 +1,200 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/context/AuthContext';
 import Link from 'next/link';
+import Image from 'next/image';
+import Navbar from '@/components/layout/Navbar';
+import { useAuth } from '@/components/auth/AuthProvider';
+import { FiArrowRight, FiBarChart2, FiPieChart, FiDollarSign, FiMessageCircle } from 'react-icons/fi';
+import { motion } from 'framer-motion';
 
 export default function HomePage() {
-  const router = useRouter();
-  const { currentUser, loading } = useAuth();
-  const [animateAI, setAnimateAI] = useState(false);
+  const { user } = useAuth();
 
-  useEffect(() => {
-    // Animation delay for AI text
-    const timer = setTimeout(() => {
-      setAnimateAI(true);
-    }, 500);
-    
-    return () => clearTimeout(timer);
-  }, []);
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-100">
-        <div className="p-8 text-center">
-          <div className="w-16 h-16 mx-auto border-t-4 border-b-4 border-indigo-500 rounded-full animate-spin"></div>
-          <h2 className="mt-4 text-xl font-semibold text-gray-700">Loading...</h2>
-        </div>
-      </div>
-    );
-  }
+  const features = [
+    {
+      icon: <FiPieChart className="h-6 w-6" />,
+      title: 'Expense Tracking',
+      description: 'Visualize your spending patterns with beautiful charts and insights.'
+    },
+    {
+      icon: <FiBarChart2 className="h-6 w-6" />,
+      title: 'Financial Health',
+      description: 'Get a clear picture of your financial health with our scoring system.'
+    },
+    {
+      icon: <FiDollarSign className="h-6 w-6" />,
+      title: 'Investment Tracking',
+      description: 'Monitor your investments and portfolio growth over time.'
+    },
+    {
+      icon: <FiMessageCircle className="h-6 w-6" />,
+      title: 'AI Assistant',
+      description: 'Ask financial questions and get expert advice from our AI assistant.'
+    }
+  ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-indigo-50 to-white">
-      {/* Header */}
-      <header className="px-6 py-4 mx-auto max-w-7xl">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center">
-            <span className="text-2xl font-bold text-indigo-600">FinAI Assistant</span>
-          </div>
-          <div>
-            {currentUser ? (
-              <Link 
-                href="/dashboard" 
-                className="px-4 py-2 mr-2 text-sm font-medium text-white transition-colors duration-150 bg-indigo-600 rounded-md hover:bg-indigo-700"
-              >
-                Dashboard
-              </Link>
-            ) : (
-              <>
-                <Link 
-                  href="/auth/login" 
-                  className="px-4 py-2 mr-2 text-sm font-medium text-indigo-600 transition-colors duration-150 border border-indigo-600 rounded-md hover:bg-indigo-50"
-                >
-                  Log In
-                </Link>
-                <Link 
-                  href="/auth/register" 
-                  className="px-4 py-2 text-sm font-medium text-white transition-colors duration-150 bg-indigo-600 rounded-md hover:bg-indigo-700"
-                >
-                  Sign Up
-                </Link>
-              </>
-            )}
+    <div className="flex flex-col min-h-screen">
+      <Navbar />
+      {/* Hero Section */}
+      <section className="relative py-20 overflow-hidden">
+        {/* Background Elements */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-0 left-0 w-full h-full">
+            <svg
+              viewBox="0 0 1200 800"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              className="w-full h-full opacity-10"
+            >
+              <defs>
+                <pattern id="pattern1" patternUnits="userSpaceOnUse" width="200" height="200" patternTransform="scale(0.75)">
+                  <circle cx="100" cy="100" r="80" fill="none" stroke="rgba(79, 70, 229, 0.2)" strokeWidth="1" />
+                </pattern>
+                <pattern id="pattern2" patternUnits="userSpaceOnUse" width="100" height="100" patternTransform="scale(1.5)">
+                  <line x1="0" y1="0" x2="100" y2="100" stroke="rgba(79, 70, 229, 0.1)" strokeWidth="1" />
+                  <line x1="100" y1="0" x2="0" y2="100" stroke="rgba(79, 70, 229, 0.1)" strokeWidth="1" />
+                </pattern>
+              </defs>
+              <rect width="1200" height="800" fill="url(#pattern1)" />
+              <rect width="1200" height="800" fill="url(#pattern2)" />
+            </svg>
           </div>
         </div>
-      </header>
 
-      {/* Hero Section */}
-      <section className="px-6 py-16 mx-auto max-w-7xl lg:py-24">
-        <div className="grid items-center grid-cols-1 gap-12 lg:grid-cols-2">
-          <div>
-            <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl lg:text-6xl">
-              Your Personal{' '}
-              <span className={`text-indigo-600 ${animateAI ? 'opacity-100' : 'opacity-0'} transition-opacity duration-700`}>
-                AI-Powered
-              </span>{' '}
-              Financial Assistant
-            </h1>
-            <p className="mt-6 text-lg text-gray-600">
-              Get personalized financial advice, manage your investments, and plan your financial future with the help of advanced AI technology.
-            </p>
-            <div className="flex flex-wrap gap-4 mt-8">
-              {currentUser ? (
-                <Link
-                  href="/dashboard"
-                  className="flex items-center justify-center px-8 py-3 text-base font-medium text-white transition-colors duration-150 bg-indigo-600 border border-transparent rounded-md hover:bg-indigo-700 md:py-4 md:text-lg md:px-10"
-                >
-                  Go to Dashboard
-                </Link>
-              ) : (
-                <Link
-                  href="/auth/register"
-                  className="flex items-center justify-center px-8 py-3 text-base font-medium text-white transition-colors duration-150 bg-indigo-600 border border-transparent rounded-md hover:bg-indigo-700 md:py-4 md:text-lg md:px-10"
-                >
-                  Move with AI
-                </Link>
-              )}
-              <Link
-                href="#features"
-                className="flex items-center justify-center px-8 py-3 text-base font-medium text-indigo-600 transition-colors duration-150 bg-white border border-indigo-600 rounded-md hover:bg-indigo-50 md:py-4 md:text-lg md:px-10"
-              >
-                Learn More
-              </Link>
-            </div>
-          </div>
-          <div className="relative flex justify-center">
-            <div className="p-4 bg-white rounded-xl shadow-xl">
-              <div className="w-full overflow-hidden rounded-lg shadow-sm">
-                <div className="p-3 bg-indigo-600 rounded-t-lg">
-                  <div className="flex space-x-2">
-                    <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                    <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
-                    <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                  </div>
-                </div>
-                <div className="p-6 bg-white border-t-0 rounded-b-lg">
-                  <div className="space-y-4">
-                    <div className="flex justify-start">
-                      <div className="max-w-[80%] px-4 py-2 bg-gray-100 rounded-lg">
-                        <p className="text-sm">Hello! I'm your AI financial assistant. How can I help you today?</p>
-                      </div>
-                    </div>
-                    <div className="flex justify-end">
-                      <div className="max-w-[80%] px-4 py-2 text-white bg-indigo-600 rounded-lg">
-                        <p className="text-sm">I want to start investing but I'm not sure where to begin.</p>
-                      </div>
-                    </div>
-                    <div className="flex justify-start">
-                      <div className="max-w-[80%] px-4 py-2 bg-gray-100 rounded-lg">
-                        <p className="text-sm">I'd be happy to help! Based on your risk profile and goals, I recommend starting with a diversified ETF portfolio. Would you like me to create a personalized investment plan?</p>
-                      </div>
-                    </div>
-                    <div className="mt-4">
-                      <div className="flex items-center px-3 py-2 bg-gray-100 rounded-lg">
-                        <input
-                          type="text"
-                          placeholder="Type your question..."
-                          className="flex-1 bg-transparent border-none outline-none"
-                          disabled
-                        />
-                        <button className="p-1 text-white bg-indigo-600 rounded-full disabled:opacity-75" disabled>
-                          <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
-                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L9 9.414V13a1 1 0 102 0V9.414l1.293 1.293a1 1 0 001.414-1.414z" clipRule="evenodd" />
-                          </svg>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
+        <div className="container mx-auto px-4">
+          <div className="max-w-4xl mx-auto text-center">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+            >
+              <div className="flex justify-center mb-6">
+                <div className="relative w-32 h-32">
+                  <Image 
+                    src="/matador.png" 
+                    alt="El Matador" 
+                    width={128} 
+                    height={128}
+                    priority
+                    className="object-contain"
+                  />
                 </div>
               </div>
-            </div>
-            <div className="absolute -z-10 w-72 h-72 bg-indigo-300 rounded-full blur-3xl opacity-20 -bottom-10 -right-10"></div>
-            <div className="absolute -z-10 w-72 h-72 bg-blue-300 rounded-full blur-3xl opacity-20 -top-10 -left-10"></div>
+              <h1 className="text-5xl md:text-6xl font-extrabold text-white mb-6">
+                El Matador <span className="text-indigo-400">Financial</span>
+              </h1>
+              <p className="text-xl text-gray-300 mb-8">
+                Your AI-powered financial assistant for tracking expenses, 
+                monitoring investments, and improving your financial health.
+              </p>
+              
+              <div className="flex flex-col sm:flex-row justify-center gap-4">
+                {user ? (
+                  <Link
+                    href="/dashboard"
+                    className="flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 md:text-lg transition duration-150"
+                  >
+                    Go to Dashboard
+                    <FiArrowRight className="ml-2" />
+                  </Link>
+                ) : (
+                  <>
+                    <Link
+                      href="/login"
+                      className="flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 md:text-lg transition duration-150"
+                    >
+                      Get Started
+                      <FiArrowRight className="ml-2" />
+                    </Link>
+                    <Link
+                      href="/login"
+                      className="flex items-center justify-center px-8 py-3 border border-gray-600 text-base font-medium rounded-md text-gray-200 hover:bg-gray-800 md:text-lg transition duration-150"
+                    >
+                      Sign In
+                    </Link>
+                  </>
+                )}
+              </div>
+            </motion.div>
           </div>
         </div>
       </section>
 
       {/* Features Section */}
-      <section id="features" className="px-6 py-16 bg-white">
-        <div className="mx-auto max-w-7xl">
-          <div className="text-center">
-            <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
-              Powered by Advanced AI Technology
+      <section className="py-16 bg-gray-800 bg-opacity-50">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+              Powerful Financial Tools
             </h2>
-            <p className="max-w-2xl mx-auto mt-4 text-lg text-gray-600">
-              Our platform combines the power of AI with financial expertise to provide you with personalized guidance.
+            <p className="text-xl text-gray-300 max-w-3xl mx-auto">
+              Everything you need to manage your finances in one place
             </p>
           </div>
-
-          <div className="grid grid-cols-1 gap-8 mt-12 sm:grid-cols-2 lg:grid-cols-3">
-            {/* Feature 1 */}
-            <div className="p-6 bg-white border border-gray-200 rounded-lg shadow-sm">
-              <div className="inline-flex items-center justify-center w-12 h-12 mb-4 text-white bg-indigo-600 rounded-md">
-                <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                </svg>
-              </div>
-              <h3 className="mb-2 text-xl font-bold">Personalized Financial Insights</h3>
-              <p className="text-gray-600">
-                Receive AI-generated insights tailored to your financial situation, goals, and preferences.
-              </p>
-            </div>
-
-            {/* Feature 2 */}
-            <div className="p-6 bg-white border border-gray-200 rounded-lg shadow-sm">
-              <div className="inline-flex items-center justify-center w-12 h-12 mb-4 text-white bg-indigo-600 rounded-md">
-                <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                </svg>
-              </div>
-              <h3 className="mb-2 text-xl font-bold">Investment Recommendations</h3>
-              <p className="text-gray-600">
-                Get intelligent investment suggestions based on market trends, risk analysis, and your financial goals.
-              </p>
-            </div>
-
-            {/* Feature 3 */}
-            <div className="p-6 bg-white border border-gray-200 rounded-lg shadow-sm">
-              <div className="inline-flex items-center justify-center w-12 h-12 mb-4 text-white bg-indigo-600 rounded-md">
-                <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-              </div>
-              <h3 className="mb-2 text-xl font-bold">Financial Planning</h3>
-              <p className="text-gray-600">
-                Plan for your future with AI-assisted budgeting, retirement planning, and goal setting.
-              </p>
-            </div>
+          
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-6xl mx-auto">
+            {features.map((feature, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+                className="bg-gray-800 p-6 rounded-xl border border-gray-700 hover:border-indigo-500 transition-all duration-300"
+              >
+                <div className="bg-indigo-600 p-2 w-12 h-12 rounded-lg flex items-center justify-center mb-4">
+                  {feature.icon}
+                </div>
+                <h3 className="text-xl font-semibold text-white mb-2">{feature.title}</h3>
+                <p className="text-gray-400">{feature.description}</p>
+              </motion.div>
+            ))}
           </div>
         </div>
       </section>
 
       {/* CTA Section */}
-      <section className="px-6 py-16 bg-indigo-600">
-        <div className="mx-auto max-w-7xl">
-          <div className="px-6 py-10 bg-indigo-700 rounded-3xl">
-            <div className="max-w-xl mx-auto text-center">
-              <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
-                Ready to transform your financial journey?
-              </h2>
-              <p className="mt-4 text-lg text-indigo-100">
-                Join thousands of users who are already leveraging AI to make smarter financial decisions.
-              </p>
-              <div className="mt-8">
-                {currentUser ? (
-                  <Link
-                    href="/dashboard"
-                    className="inline-flex items-center justify-center px-8 py-3 text-base font-medium text-indigo-600 transition-colors duration-150 bg-white border border-transparent rounded-md hover:bg-indigo-50 md:py-4 md:text-lg md:px-10"
-                  >
-                    Go to Dashboard
-                  </Link>
-                ) : (
-                  <Link
-                    href="/auth/register"
-                    className="inline-flex items-center justify-center px-8 py-3 text-base font-medium text-indigo-600 transition-colors duration-150 bg-white border border-transparent rounded-md hover:bg-indigo-50 md:py-4 md:text-lg md:px-10"
-                  >
-                    Get Started Now
-                  </Link>
-                )}
-              </div>
-            </div>
-          </div>
+      <section className="py-20 bg-gradient-to-br from-indigo-900 to-gray-900">
+        <div className="container mx-auto px-4 text-center">
+          <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
+            Ready to take control of your finances?
+          </h2>
+          <p className="text-xl text-gray-300 mb-8 max-w-3xl mx-auto">
+            Join El Matador today and transform the way you manage your money with AI-powered insights and recommendations.
+          </p>
+          
+          {!user && (
+            <Link
+              href="/login"
+              className="inline-flex items-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-indigo-700 bg-white hover:bg-gray-200 md:text-lg transition duration-150"
+            >
+              Create Your Account
+              <FiArrowRight className="ml-2" />
+            </Link>
+          )}
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="px-6 py-12 bg-gray-50">
-        <div className="mx-auto max-w-7xl">
-          <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
-            <div>
-              <h3 className="text-sm font-semibold tracking-wider text-gray-400 uppercase">Product</h3>
-              <ul className="mt-4 space-y-4">
-                <li><a href="#" className="text-base text-gray-500 hover:text-gray-900">Features</a></li>
-                <li><a href="#" className="text-base text-gray-500 hover:text-gray-900">Pricing</a></li>
-                <li><a href="#" className="text-base text-gray-500 hover:text-gray-900">Testimonials</a></li>
-                <li><a href="#" className="text-base text-gray-500 hover:text-gray-900">FAQ</a></li>
-              </ul>
+      <footer className="py-10 bg-gray-900">
+        <div className="container mx-auto px-4">
+          <div className="flex flex-col md:flex-row justify-between items-center">
+            <div className="flex items-center">
+              <div className="relative w-10 h-10 mr-2">
+                <Image
+                  src="/matador.png"
+                  alt="El Matador"
+                  width={40}
+                  height={40}
+                  className="object-contain"
+                />
+              </div>
+              <span className="text-white font-bold text-xl">El Matador</span>
             </div>
-            <div>
-              <h3 className="text-sm font-semibold tracking-wider text-gray-400 uppercase">Company</h3>
-              <ul className="mt-4 space-y-4">
-                <li><a href="#" className="text-base text-gray-500 hover:text-gray-900">About</a></li>
-                <li><a href="#" className="text-base text-gray-500 hover:text-gray-900">Blog</a></li>
-                <li><a href="#" className="text-base text-gray-500 hover:text-gray-900">Careers</a></li>
-                <li><a href="#" className="text-base text-gray-500 hover:text-gray-900">Press</a></li>
-              </ul>
+            
+            <div className="mt-4 md:mt-0 text-gray-400 text-sm">
+              © {new Date().getFullYear()} El Matador Financial. All rights reserved.
             </div>
-            <div>
-              <h3 className="text-sm font-semibold tracking-wider text-gray-400 uppercase">Resources</h3>
-              <ul className="mt-4 space-y-4">
-                <li><a href="#" className="text-base text-gray-500 hover:text-gray-900">Help Center</a></li>
-                <li><a href="#" className="text-base text-gray-500 hover:text-gray-900">Community</a></li>
-                <li><a href="#" className="text-base text-gray-500 hover:text-gray-900">Webinars</a></li>
-                <li><a href="#" className="text-base text-gray-500 hover:text-gray-900">Events</a></li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="text-sm font-semibold tracking-wider text-gray-400 uppercase">Legal</h3>
-              <ul className="mt-4 space-y-4">
-                <li><a href="#" className="text-base text-gray-500 hover:text-gray-900">Privacy</a></li>
-                <li><a href="#" className="text-base text-gray-500 hover:text-gray-900">Terms</a></li>
-                <li><a href="#" className="text-base text-gray-500 hover:text-gray-900">Cookies</a></li>
-                <li><a href="#" className="text-base text-gray-500 hover:text-gray-900">Licenses</a></li>
-              </ul>
-            </div>
-          </div>
-          <div className="pt-8 mt-8 border-t border-gray-200">
-            <p className="text-base text-gray-400">
-              &copy; 2025 FinAI Assistant. All rights reserved.
-            </p>
           </div>
         </div>
       </footer>
