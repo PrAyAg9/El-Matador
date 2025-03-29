@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useLayoutEffect } from 'react';
 import { useAuth } from '@/components/auth/AuthProvider';
 import ChatInterface from '@/components/dashboard/ChatInterface';
 import { User } from 'firebase/auth';
+import { useSearchParams } from 'next/navigation';
 
 // Extended User type with our custom properties
 interface ExtendedUser extends User {
@@ -20,6 +21,7 @@ export default function AssistantPage() {
   const [isActivatingAI, setIsActivatingAI] = useState(true);
   const pageRef = useRef<HTMLDivElement>(null);
   const [activeTopic, setActiveTopic] = useState('');
+  const searchParams = useSearchParams();
   
   // Reference to artificially trigger events in ChatInterface
   const chatInputRef = useRef<HTMLInputElement>(null);
@@ -35,10 +37,16 @@ export default function AssistantPage() {
       // Force scroll to top again right before showing the chat interface
       window.scrollTo(0, 0);
       setIsActivatingAI(false);
+      
+      // Check if there's a topic parameter in the URL
+      const topicParam = searchParams.get('topic');
+      if (topicParam) {
+        setActiveTopic(topicParam);
+      }
     }, 2000);
     
     return () => clearTimeout(timer);
-  }, []);
+  }, [searchParams]);
 
   // Add event listener to prevent any automatic scrolling
   useEffect(() => {
@@ -61,21 +69,38 @@ export default function AssistantPage() {
       // Find the chat input and simulate typing
       const inputElement = document.querySelector('#chat-input') as HTMLInputElement;
       if (inputElement) {
-        // Set the value
+        // Set the value based on the topic
+        let message = '';
         switch (activeTopic) {
           case 'retirement':
-            inputElement.value = 'How should I plan for retirement?';
+            message = 'How should I plan for retirement?';
             break;
           case 'investment':
-            inputElement.value = 'What investment strategies would you recommend?';
+            message = 'What investment strategies would you recommend?';
             break;
           case 'tax':
-            inputElement.value = 'How can I optimize my tax planning?';
+            message = 'How can I optimize my tax planning?';
             break;
           case 'debt':
-            inputElement.value = 'What is the best way to manage my debt?';
+            message = 'What is the best way to manage my debt?';
             break;
+          case 'markets':
+            message = 'What are the current market trends I should know about?';
+            break;
+          case 'accounts':
+            message = 'How should I manage my different financial accounts?';
+            break;
+          case 'credit':
+            message = 'How can I improve my credit score and manage credit cards effectively?';
+            break;
+          case 'help':
+            message = 'I need help understanding how to use El Matador financial services.';
+            break;
+          default:
+            message = `Tell me about ${activeTopic} in personal finance.`;
         }
+        
+        inputElement.value = message;
         
         // Trigger the enter key press after a delay to ensure chat is visible
         setTimeout(() => {

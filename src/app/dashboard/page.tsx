@@ -311,7 +311,7 @@ export default function DashboardPage() {
               action: () => openProfileModal()
             },
             { 
-                title: 'Chat with AI', 
+              title: 'Chat with AI', 
               icon: <ChatBubbleLeftRightIcon className="h-6 w-6" />, 
               color: 'bg-purple-100 text-purple-600',
               link: '/assistant'
@@ -320,31 +320,31 @@ export default function DashboardPage() {
               title: 'Investments', 
               icon: <ChartBarIcon className="h-6 w-6" />, 
               color: 'bg-blue-100 text-blue-600',
-              link: '/investments'
+              link: '/dashboard/investments'
             },
             { 
               title: 'Markets', 
               icon: <ArrowTrendingUpIcon className="h-6 w-6" />, 
               color: 'bg-green-100 text-green-600',
-              link: '/markets'
+              link: '/assistant?topic=markets'
             },
             { 
               title: 'Accounts', 
               icon: <BanknotesIcon className="h-6 w-6" />, 
               color: 'bg-yellow-100 text-yellow-600',
-              link: '/accounts'
+              link: '/assistant?topic=accounts'
             },
             { 
               title: 'Credit', 
               icon: <CreditCardIcon className="h-6 w-6" />, 
               color: 'bg-red-100 text-red-600',
-              link: '/credit'
+              link: '/assistant?topic=credit'
             },
             { 
               title: 'Help', 
               icon: <QuestionMarkCircleIcon className="h-6 w-6" />, 
               color: 'bg-gray-100 text-gray-600',
-              link: '/help'
+              link: '/assistant?topic=help'
             }
           ].map((action, index) => {
             // Use either Link or button based on whether it has a link or action
