@@ -1,0 +1,25 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Test user access - wide open for development
+    match /users/{userId} {
+      // Allow full access to test user
+      allow read, write: if request.auth != null;
+      
+      // User's collections
+      match /{collection}/{document=**} {
+        allow read, write: if request.auth != null;
+      }
+    }
+    
+    // Public data collections
+    match /marketData/{document=**} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Allow all access for development
+    match /{document=**} {
+      allow read, write: if request.auth != null;
+    }
+  }
+} 
