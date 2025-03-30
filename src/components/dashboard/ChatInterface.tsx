@@ -2,51 +2,9 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '@/components/auth/AuthProvider';
-
-// Simulated function for generating chat responses
-const generateChatResponse = async (
-  history: { role: 'user' | 'model'; text: string }[],
-  message: string,
-  userData: any
-): Promise<string> => {
-  // Simulate network delay
-  await new Promise(resolve => setTimeout(resolve, Math.random() * 1000 + 500));
-  
-  // Convert message to lowercase for easier matching
-  const msgLower = message.toLowerCase();
-  
-  // Check for specific financial topics
-  if (msgLower.includes('invest') || msgLower.includes('stock') || msgLower.includes('etf') || msgLower.includes('fund')) {
-    return "Based on your financial profile, I recommend a diversified portfolio with a mix of stocks, bonds, and ETFs. Consider allocating 60% to stocks, 30% to bonds, and 10% to alternative investments based on your risk tolerance. Would you like more specific investment recommendations?";
-  }
-  
-  if (msgLower.includes('budget') || msgLower.includes('spend') || msgLower.includes('saving')) {
-    return "Looking at your income and expenses, I recommend using the 50/30/20 rule: 50% for needs, 30% for wants, and 20% for savings. This would mean allocating about $" + (Math.floor(Math.random() * 2000) + 1000) + " to your essential needs, $" + (Math.floor(Math.random() * 1000) + 600) + " to discretionary spending, and $" + (Math.floor(Math.random() * 800) + 400) + " to savings and debt repayment. Let me help you create a personalized budget plan.";
-  }
-  
-  if (msgLower.includes('debt') || msgLower.includes('loan') || msgLower.includes('credit')) {
-    return "To reduce your debt efficiently, I recommend the avalanche method - paying minimum amounts on all debts, then using extra money to pay off high-interest debt first. This could save you thousands in interest payments. Based on the typical debt profile, focusing on credit cards first, then personal loans, and finally mortgages or student loans makes financial sense. Would you like me to create a personalized debt payoff plan?";
-  }
-  
-  if (msgLower.includes('retire') || msgLower.includes('401k') || msgLower.includes('ira')) {
-    return "For retirement planning, I suggest maximizing your tax-advantaged accounts like 401(k) and IRAs first. Based on your age and income, aim to save about 15% of your income for retirement. If you start investing $500 monthly with a 7% average return, you could have approximately $" + (Math.floor(Math.random() * 500000) + 500000) + " in 30 years. Would you like a more detailed retirement projection?";
-  }
-  
-  if (msgLower.includes('tax') || msgLower.includes('deduction') || msgLower.includes('write-off')) {
-    return "There are several tax strategies that might benefit you. Consider maximizing contributions to tax-advantaged accounts, harvesting tax losses in your investment portfolio, and tracking potential deductible expenses. Based on your profile, you might qualify for home office deductions, education credits, or health care deductions. Would you like more specific tax optimization advice?";
-  }
-  
-  if (msgLower.includes('house') || msgLower.includes('mortgage') || msgLower.includes('property')) {
-    return "When considering a home purchase, the general guideline is to spend no more than 28% of your gross monthly income on housing expenses. With current mortgage rates around 6-7%, a $300,000 home with 20% down would result in payments of approximately $1,800-$2,000 per month including taxes and insurance. Would you like me to analyze your specific home buying situation?";
-  }
-  
-  if (msgLower.includes('hello') || msgLower.includes('hi') || msgLower.includes('hey') || message.length < 10) {
-    return "Hello there! I'm your El Matador financial assistant. I can help you with investment strategies, retirement planning, budgeting, debt management, and other financial questions. What would you like to know about today?";
-  }
-  
-  // Default response if no specific topics are matched
-  return "Thank you for your question about " + message.split(' ').slice(0, 3).join(' ') + "... As your financial assistant, I can provide personalized advice on this topic. To give you the most accurate guidance, could you share a bit more about your specific situation or what aspect you're most interested in?";
-};
+import ReactMarkdown from 'react-markdown';
+import { SparklesIcon, StarIcon } from '@heroicons/react/24/solid';
+import { generateChatResponse } from '@/lib/gemini/client';
 
 // Various suggestion categories
 interface SuggestionCategory {
@@ -89,12 +47,73 @@ const CHAT_SUGGESTIONS: ChatSuggestions = {
   }
 };
 
+// El Matador services
+interface ElMatadorService {
+  id: string;
+  title: string;
+  description: string;
+  icon: JSX.Element;
+}
+
+const EL_MATADOR_SERVICES: ElMatadorService[] = [
+  {
+    id: 'budget',
+    title: 'Budget Creation & Management',
+    description: 'Create personalized budgets based on your income, expenses, and financial goals.',
+    icon: <div className="w-6 h-6 text-yellow-400">💰</div>
+  },
+  {
+    id: 'credit',
+    title: 'Credit Score Improvement',
+    description: 'Analyze your credit history and receive tailored recommendations to boost your score.',
+    icon: <div className="w-6 h-6 text-yellow-400">📈</div>
+  },
+  {
+    id: 'retirement',
+    title: 'Retirement Planning',
+    description: 'Plan your retirement with confidence using our smart calculator and personalized strategies.',
+    icon: <div className="w-6 h-6 text-yellow-400">🏖️</div>
+  },
+  {
+    id: 'investment',
+    title: 'Investment Opportunities',
+    description: 'Discover investment opportunities tailored to your risk tolerance and financial goals.',
+    icon: <div className="w-6 h-6 text-yellow-400">📊</div>
+  },
+  {
+    id: 'tax',
+    title: 'Tax Planning & Optimization',
+    description: 'Understand tax implications and receive strategies to optimize your tax position.',
+    icon: <div className="w-6 h-6 text-yellow-400">📝</div>
+  },
+  {
+    id: 'stock',
+    title: 'Stock & Mutual Fund Analysis',
+    description: 'Get comprehensive analysis of stocks and mutual funds based on your investment profile.',
+    icon: <div className="w-6 h-6 text-yellow-400">📊</div>
+  },
+  {
+    id: 'estate',
+    title: 'Estate Planning & Asset Protection',
+    description: 'Protect your assets and plan for the future with comprehensive estate planning guidance.',
+    icon: <div className="w-6 h-6 text-yellow-400">🏠</div>
+  },
+  {
+    id: 'banking',
+    title: 'Banking & Financial Services',
+    description: 'Find the right bank and financial services for your specific needs.',
+    icon: <div className="w-6 h-6 text-yellow-400">🏦</div>
+  }
+];
+
 export default function ChatInterface() {
   const { user } = useAuth();
   const [messages, setMessages] = useState<{ role: 'user' | 'model'; text: string }[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [activeSuggestionCategory, setActiveSuggestionCategory] = useState<string | null>(null);
+  const [showElMatadorServices, setShowElMatadorServices] = useState(false);
+  const [isElMatadorMode, setIsElMatadorMode] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -103,12 +122,8 @@ export default function ChatInterface() {
 
   // Scroll to bottom of chat whenever messages change
   // useEffect(() => {
-  //   scrollToBottom();
-  // }, [messages]);
-
-  // const scrollToBottom = () => {
   //   messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  // };
+  // }, [messages]);
 
   const handleSendMessage = async () => {
     if (!input.trim() || isLoading) return;
@@ -123,12 +138,105 @@ export default function ChatInterface() {
     setIsLoading(true);
     
     try {
-      // Generate AI response
-      const aiResponse = await generateChatResponse(
-        messages,
-        userMessage,
-        user
-      );
+      // If in El Matador mode, format response with premium markdown
+      let aiResponse = "";
+      
+      if (isElMatadorMode) {
+        // Format an El Matador style enhanced response
+        const msgLower = userMessage.toLowerCase();
+        
+        if (msgLower.includes('budget') || msgLower.includes('budget creation')) {
+          aiResponse = `## Budget Creation & Management
+
+Based on your financial profile, here's a personalized budget breakdown:
+
+### Monthly Income Allocation:
+- **Essential Expenses (50%):** $${Math.floor(Math.random() * 2000) + 1000}
+  - Housing: $${Math.floor(Math.random() * 1000) + 800}
+  - Utilities: $${Math.floor(Math.random() * 200) + 100}
+  - Groceries: $${Math.floor(Math.random() * 300) + 200}
+  - Transportation: $${Math.floor(Math.random() * 200) + 100}
+  
+- **Discretionary Spending (30%):** $${Math.floor(Math.random() * 1000) + 600}
+  - Entertainment: $${Math.floor(Math.random() * 300) + 200}
+  - Dining out: $${Math.floor(Math.random() * 300) + 200}
+  - Shopping: $${Math.floor(Math.random() * 300) + 200}
+  
+- **Savings & Debt (20%):** $${Math.floor(Math.random() * 800) + 400}
+  - Emergency fund: $${Math.floor(Math.random() * 300) + 200}
+  - Retirement: $${Math.floor(Math.random() * 300) + 100}
+  - Debt repayment: $${Math.floor(Math.random() * 200) + 100}
+
+Would you like me to help you implement this budget or make adjustments to specific categories?`;
+        } else if (msgLower.includes('credit') || msgLower.includes('credit score')) {
+          aiResponse = `## Credit Score Improvement Plan
+
+Based on your current profile, here are targeted recommendations to improve your credit score:
+
+### Current Factors Affecting Your Score:
+- **Payment History (35% impact):** Good standing with 2 late payments in past year
+- **Credit Utilization (30% impact):** Currently at 68% (Recommendation: below 30%)
+- **Credit Age (15% impact):** Average account age of 4 years
+- **Credit Mix (10% impact):** Good mix of revolving and installment credit
+- **New Credit (10% impact):** 3 recent inquiries in the past 6 months
+
+### Action Plan:
+1. **Reduce utilization immediately:**
+   - Pay down highest utilization cards first
+   - Consider a balance transfer to a 0% APR card
+
+2. **Set up automatic payments:**
+   - Ensure at least minimum payments are automatic
+   - Set calendar reminders for payment dates
+
+3. **Don't close old accounts:**
+   - Keep your oldest accounts active with small purchases
+   - Pay them off monthly to maintain history without cost
+
+Would you like a more detailed plan for any of these areas?`;
+        } else if (msgLower.includes('retirement') || msgLower.includes('retirement planning')) {
+          aiResponse = `## Retirement Planning Analysis
+
+Based on your current age, income, and savings profile, here's your retirement outlook:
+
+### Your Retirement Numbers:
+- **Target Retirement Age:** 65
+- **Current Retirement Savings:** $${Math.floor(Math.random() * 100000) + 50000}
+- **Monthly Contributions:** $${Math.floor(Math.random() * 1000) + 500}
+- **Estimated Annual Return:** 7%
+
+### Projections:
+- **Estimated Retirement Nest Egg:** $${Math.floor(Math.random() * 1000000) + 1000000}
+- **Monthly Income in Retirement:** $${Math.floor(Math.random() * 5000) + 3000}
+- **Retirement Income Gap:** $${Math.floor(Math.random() * 1000) + 500}/month
+
+### Recommendations:
+1. **Increase 401(k) Contributions:**
+   - Raise contribution by 2% to maximize employer match
+   - Current match: 100% up to 5% of salary
+
+2. **Optimize Investment Allocation:**
+   - Current allocation: 60% stocks, 30% bonds, 10% cash
+   - Recommended: 70% stocks, 25% bonds, 5% cash (based on your age and risk tolerance)
+
+3. **Consider Roth Conversion Strategy:**
+   - Tax benefits for partial conversions in current tax bracket
+   - Provides tax diversification in retirement
+
+Would you like a detailed year-by-year retirement savings plan?`;
+        } else {
+          // Use Gemini API but format the response differently
+          const rawResponse = await generateChatResponse(messages, userMessage, user);
+          
+          // Format as El Matador premium response
+          aiResponse = `## El Matador Financial Analysis
+
+${rawResponse}`;
+        }
+      } else {
+        // Use Gemini API for standard responses
+        aiResponse = await generateChatResponse(messages, userMessage, user);
+      }
       
       // Add AI response to chat
       setMessages(prev => [...prev, { role: 'model', text: aiResponse }]);
@@ -144,6 +252,25 @@ export default function ChatInterface() {
       setTimeout(() => {
         inputRef.current?.focus();
       }, 100);
+    }
+  };
+
+  const handleElMatadorService = (serviceId: string) => {
+    // Set El Matador mode
+    setIsElMatadorMode(true);
+    
+    // Hide services panel
+    setShowElMatadorServices(false);
+    
+    // Find the selected service
+    const service = EL_MATADOR_SERVICES.find(s => s.id === serviceId);
+    
+    if (service) {
+      // Set input to the service title
+      setInput(service.title);
+      
+      // Send the message
+      setTimeout(handleSendMessage, 100);
     }
   };
 
@@ -174,8 +301,16 @@ export default function ChatInterface() {
       {/* Chat header */}
       <div className="flex items-center justify-between px-4 py-3 bg-indigo-600 text-white">
         <h2 className="text-lg font-semibold">Financial Assistant</h2>
-        <div className="text-xs bg-indigo-700 px-2 py-1 rounded-full">
-          AI Powered
+        <div className="flex items-center">
+          {isElMatadorMode && (
+            <span className="mr-2 text-xs bg-yellow-500 text-black px-2 py-1 rounded-full flex items-center">
+              <StarIcon className="w-3 h-3 mr-1" />
+              El Matador Mode
+            </span>
+          )}
+          <div className="text-xs bg-indigo-700 px-2 py-1 rounded-full">
+            AI Powered
+          </div>
         </div>
       </div>
       
@@ -196,7 +331,7 @@ export default function ChatInterface() {
             </div>
           )}
           
-          {/* Chat history */}
+          {/* Chat history with Markdown support */}
           {messages.map((message, index) => (
             <div
               key={index}
@@ -216,7 +351,13 @@ export default function ChatInterface() {
                     : 'bg-gray-700 text-white'
                 }`}
               >
-                <p className="whitespace-pre-wrap text-sm">{message.text}</p>
+                {message.role === 'user' ? (
+                  <p className="whitespace-pre-wrap text-sm">{message.text}</p>
+                ) : (
+                  <div className="prose prose-sm prose-invert max-w-none text-sm">
+                    <ReactMarkdown>{message.text}</ReactMarkdown>
+                  </div>
+                )}
               </div>
               {message.role === 'user' && (
                 <div className="flex-shrink-0 ml-2">
@@ -248,79 +389,140 @@ export default function ChatInterface() {
             </div>
           )}
           
+          {/* El Matador Services Panel */}
+          {showElMatadorServices && (
+            <div className="bg-gray-900 rounded-lg p-4 border border-yellow-500 mb-4">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-lg font-bold text-yellow-400 flex items-center">
+                  <StarIcon className="w-5 h-5 mr-2" />
+                  El Matador Premium Services
+                </h3>
+                <button 
+                  onClick={() => setShowElMatadorServices(false)}
+                  className="text-gray-400 hover:text-white"
+                >
+                  ✕
+                </button>
+              </div>
+              <p className="text-gray-300 text-sm mb-4">
+                Select a premium service for in-depth financial analysis and personalized recommendations:
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {EL_MATADOR_SERVICES.map(service => (
+                  <button
+                    key={service.id}
+                    onClick={() => handleElMatadorService(service.id)}
+                    className="bg-gray-800 hover:bg-gray-700 border border-yellow-700 hover:border-yellow-500 rounded-lg p-3 text-left transition-colors"
+                  >
+                    <div className="flex items-start">
+                      <div className="mt-1 mr-3">{service.icon}</div>
+                      <div>
+                        <h4 className="font-medium text-yellow-400">{service.title}</h4>
+                        <p className="text-gray-400 text-xs mt-1">{service.description}</p>
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+          
           {/* Anchor for scrolling to bottom */}
-          <div ref={messagesEndRef}></div>
+          <div ref={messagesEndRef} />
         </div>
       </div>
       
-      {/* Suggestions */}
-      {messages.length < 3 && !activeSuggestionCategory && (
-        <div className="px-4 py-3 bg-gray-700 border-t border-gray-600">
-          <h3 className="text-sm font-medium text-gray-200 mb-2">Try asking about:</h3>
-          <div className="flex flex-wrap gap-2">
+      {/* Chat input */}
+      <div className="p-4 border-t border-gray-700 bg-gray-800">
+        {/* Suggestion categories */}
+        {!activeSuggestions && !showElMatadorServices && (
+          <div className="flex mb-3 space-x-2 overflow-x-auto pb-2 scrollbar-thin">
             {Object.keys(CHAT_SUGGESTIONS).map(category => (
               <button
                 key={category}
                 onClick={() => setActiveSuggestionCategory(category)}
-                className="px-3 py-1 text-xs bg-indigo-800 text-white rounded-full hover:bg-indigo-700"
+                className="px-3 py-1 text-xs rounded-full bg-gray-700 hover:bg-gray-600 text-gray-300 whitespace-nowrap"
               >
                 {CHAT_SUGGESTIONS[category].title}
               </button>
             ))}
-          </div>
-        </div>
-      )}
-      
-      {/* Active suggestions */}
-      {activeSuggestions && (
-        <div className="px-4 py-3 bg-gray-700 border-t border-gray-600">
-          <div className="flex justify-between items-center mb-2">
-            <h3 className="text-sm font-medium text-gray-200">{activeSuggestions.title}</h3>
             <button
-              onClick={() => setActiveSuggestionCategory(null)}
-              className="text-xs text-gray-300 hover:text-white"
+              onClick={() => {
+                setShowElMatadorServices(true);
+                setActiveSuggestionCategory(null);
+              }}
+              className="px-3 py-1 text-xs rounded-full bg-gradient-to-r from-yellow-600 to-yellow-700 hover:from-yellow-500 hover:to-yellow-600 text-white whitespace-nowrap flex items-center"
             >
-              Close
+              <StarIcon className="w-3 h-3 mr-1" />
+              Let El Matador Work
             </button>
           </div>
-          <div className="flex flex-col gap-2">
-            {activeSuggestions.items.map((suggestion: string, idx: number) => (
+        )}
+        
+        {/* Suggestion items */}
+        {activeSuggestions && (
+          <div className="mb-3">
+            <div className="flex justify-between mb-2">
+              <h3 className="text-sm font-medium text-indigo-400">{activeSuggestions.title} Suggestions</h3>
               <button
-                key={idx}
-                onClick={() => handleSuggestionClick(suggestion)}
-                className="px-3 py-2 text-sm text-left bg-gray-600 text-white border border-gray-500 rounded-md hover:bg-indigo-700"
+                onClick={() => setActiveSuggestionCategory(null)}
+                className="text-xs text-gray-400 hover:text-white"
               >
-                {suggestion}
+                Close
               </button>
-            ))}
+            </div>
+            <div className="grid grid-cols-1 gap-2">
+              {activeSuggestions.items.map((suggestion, index) => (
+                <button
+                  key={index}
+                  onClick={() => handleSuggestionClick(suggestion)}
+                  className="text-left text-sm p-2 rounded bg-gray-700 hover:bg-gray-600 text-white transition-colors"
+                >
+                  {suggestion}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
-      )}
-      
-      {/* Chat input */}
-      <div className="px-4 py-3 bg-gray-700 border-t border-gray-600">
-        <div className="flex">
+        )}
+        
+        {/* Input form */}
+        <div className="flex items-center">
           <input
-            type="text"
-            id="chat-input"
             ref={inputRef}
+            type="text"
             value={input}
             onChange={handleInputChange}
             onKeyDown={handleKeyDown}
-            placeholder="Ask me about investments, budgeting, retirement..."
-            className="flex-1 px-3 py-2 text-sm bg-gray-600 text-white border border-gray-500 rounded-l-md focus:outline-none focus:ring-2 focus:ring-indigo-500 placeholder-gray-400"
+            placeholder="Type your financial question..."
+            className="flex-1 p-3 rounded-l-lg bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-indigo-500"
           />
           <button
             onClick={handleSendMessage}
             disabled={isLoading || !input.trim()}
-            className="px-4 py-2 bg-indigo-600 text-white rounded-r-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
+            className={`p-3 rounded-r-lg ${
+              isLoading || !input.trim()
+                ? 'bg-indigo-700 text-indigo-300 cursor-not-allowed'
+                : 'bg-indigo-600 hover:bg-indigo-500 text-white'
+            }`}
           >
             Send
           </button>
         </div>
-        <p className="mt-2 text-xs text-gray-400 text-center">
-          AI-powered assistance by El Matador
-        </p>
+        
+        {/* El Matador AI Agent coming soon message */}
+        <div className="mt-4 text-center">
+          <div className="flex items-center justify-center space-x-2">
+            <div className="animate-pulse">
+              <SparklesIcon className="h-5 w-5 text-yellow-500" />
+            </div>
+            <p className="text-sm text-gradient bg-gradient-to-r from-yellow-500 to-amber-300 bg-clip-text text-transparent font-semibold">
+              Elmatador AI Agent coming soon - The future of finance automation
+            </p>
+            <div className="animate-pulse">
+              <SparklesIcon className="h-5 w-5 text-yellow-500" />
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

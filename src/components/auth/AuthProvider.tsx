@@ -5,9 +5,23 @@ import { User } from 'firebase/auth';
 import { onAuthStateChange } from '@/lib/firebase/auth';
 import { useRouter, usePathname } from 'next/navigation';
 
+// Extended User type with custom properties
+export interface ExtendedUser extends User {
+  financialProfile?: {
+    incomeRange?: string;
+    investmentGoals?: string[];
+    riskTolerance?: 'low' | 'medium' | 'high';
+    // Add missing properties
+    monthlyIncome?: string;
+    monthlyExpenses?: Record<string, string>;
+    goals?: string[];
+    phone?: string;
+  };
+}
+
 // Define the Auth context type
 interface AuthContextType {
-  user: User | null;
+  user: ExtendedUser | null;
   loading: boolean;
 }
 
@@ -26,25 +40,72 @@ const protectedRoutes = [
   '/dashboard/elmatador',
   '/dashboard/investments',
   '/dashboard/profile',
+  '/dashboard/taxes',
   '/assistant'
 ];
 
 // Auth provider component that wraps the app
 export default function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<ExtendedUser | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
   const pathname = usePathname();
 
+  // Load financial profile from localStorage
+  const loadFinancialProfile = (authUser: User) => {
+    if (typeof window !== 'undefined' && authUser) {
+      try {
+        // Try to get profile from localStorage
+        const profileData = localStorage.getItem('userFinancialProfile');
+        if (profileData) {
+          const extendedUser = authUser as ExtendedUser;
+          extendedUser.financialProfile = JSON.parse(profileData);
+          
+          // Save the enhanced user to localStorage for persistence
+          localStorage.setItem('currentUser', JSON.stringify(extendedUser));
+          
+          return extendedUser;
+        }
+      } catch (error) {
+        console.error('Error loading financial profile:', error);
+      }
+    }
+    return authUser as ExtendedUser;
+  };
+
   useEffect(() => {
-    // Subscribe to auth state changes
-    const unsubscribe = onAuthStateChange((authUser) => {
-      setUser(authUser);
+    // Make sure we're in a browser environment
+    if (typeof window === 'undefined') {
+      return;
+    }
+    
+    let unsubscribeFunction = () => {};
+    
+    try {
+      // Subscribe to auth state changes
+      unsubscribeFunction = onAuthStateChange((authUser) => {
+        if (authUser) {
+          // Load financial profile and set user
+          const enrichedUser = loadFinancialProfile(authUser);
+          setUser(enrichedUser);
+          console.log('User is signed in:', authUser.uid, 'with profile:', enrichedUser.financialProfile ? 'yes' : 'no');
+        } else {
+          setUser(null);
+          console.log('No user is signed in');
+        }
+        setLoading(false);
+      });
+    } catch (error) {
+      console.error('Error setting up auth state listener:', error);
       setLoading(false);
-    });
+    }
 
     // Cleanup subscription on unmount
-    return () => unsubscribe();
+    return () => {
+      if (typeof unsubscribeFunction === 'function') {
+        unsubscribeFunction();
+      }
+    };
   }, []);
 
   // Handle route protection

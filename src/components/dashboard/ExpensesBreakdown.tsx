@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/components/auth/AuthProvider';
 import { ChartPieIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline';
 
 interface CategoryColor {
@@ -61,7 +61,7 @@ const CATEGORY_NAMES: Record<string, string> = {
 };
 
 export default function ExpensesBreakdown({ className = '' }: ExpensesBreakdownProps) {
-  const { userData } = useAuth();
+  const { user } = useAuth();
   const [totalExpenses, setTotalExpenses] = useState<number>(0);
   const [categories, setCategories] = useState<ExpenseCategory[]>([]);
   const [largestCategory, setLargestCategory] = useState<string>('');
@@ -73,8 +73,8 @@ export default function ExpensesBreakdown({ className = '' }: ExpensesBreakdownP
   }, []);
 
   useEffect(() => {
-    if (userData?.financialProfile?.monthlyExpenses) {
-      const expenses = userData.financialProfile.monthlyExpenses as Record<string, string>;
+    if (user?.financialProfile?.monthlyExpenses) {
+      const expenses = user.financialProfile.monthlyExpenses as Record<string, string>;
       let total = 0;
       const tempCategories: ExpenseCategory[] = [];
       let maxAmount = 0;
@@ -156,7 +156,7 @@ export default function ExpensesBreakdown({ className = '' }: ExpensesBreakdownP
       setTotalExpenses(3300);
       setLargestCategory('housing');
     }
-  }, [userData]);
+  }, [user]);
 
   // Calculate insights based on expense data
   const getInsight = () => {

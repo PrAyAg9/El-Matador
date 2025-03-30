@@ -33,7 +33,7 @@ export interface UserData {
 }
 
 // Create a test user for development
-export const createTestUser = async () => {
+const createTestUser = async () => {
   if (!auth) {
     console.error('Auth is not initialized');
     throw new Error('Firebase auth is not initialized');
@@ -74,7 +74,7 @@ export const createTestUser = async () => {
 /**
  * Register a new user with email and password
  */
-export const registerUser = async (email: string, password: string, displayName?: string) => {
+const registerUser = async (email: string, password: string, displayName?: string) => {
   if (!auth) {
     console.error('Auth is not initialized');
     throw new Error('Firebase auth is not initialized');
@@ -129,7 +129,7 @@ export const registerUser = async (email: string, password: string, displayName?
 /**
  * Sign in an existing user with email and password
  */
-export const signInUser = async (email: string, password: string) => {
+const signInUser = async (email: string, password: string) => {
   if (!auth) {
     console.error('Auth is not initialized');
     throw new Error('Firebase auth is not initialized');
@@ -165,14 +165,21 @@ export const signInUser = async (email: string, password: string) => {
 /**
  * Sign in with Google
  */
-export const signInWithGoogle = async () => {
-  if (!auth || !googleProvider) {
-    console.error('Auth or Google provider is not initialized');
-    throw new Error('Firebase auth or Google provider is not initialized');
+const signInWithGoogle = async (): Promise<User> => {
+  if (!auth) {
+    console.error('Auth is not initialized');
+    throw new Error('Firebase auth is not initialized');
+  }
+  
+  if (!googleProvider) {
+    console.error('Google provider is not initialized');
+    throw new Error('Google provider is not initialized');
   }
   
   try {
-    console.log('Starting Google sign-in...');
+    console.log('Starting Google sign-in process...');
+    
+    // Try to sign in with popup
     const userCredential = await signInWithPopup(auth, googleProvider);
     console.log('Google sign-in successful:', userCredential.user.uid);
     
@@ -185,6 +192,7 @@ export const signInWithGoogle = async () => {
         if (!userSnap.exists()) {
           // Create new user document
           await firestore.setDoc(userRef, {
+            uid: userCredential.user.uid,
             email: userCredential.user.email,
             displayName: userCredential.user.displayName,
             photoURL: userCredential.user.photoURL,
@@ -192,29 +200,46 @@ export const signInWithGoogle = async () => {
             lastLogin: firestore.serverTimestamp(),
             authProvider: 'google',
           });
+          console.log('Created new user document in Firestore');
         } else {
           // Update existing user document
           await firestore.updateDoc(userRef, {
             lastLogin: firestore.serverTimestamp(),
+            photoURL: userCredential.user.photoURL, // Make sure photo URL is updated
           });
+          console.log('Updated existing user document in Firestore');
         }
       } catch (error) {
         console.error('Error updating Firestore user document:', error);
         // Don't block sign-in if Firestore fails
       }
+    } else {
+      console.log('Firestore not available, skipping user document creation');
     }
     
     return userCredential.user;
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error with Google sign-in:', error);
-    throw error;
+    
+    // Add more specific error handling
+    if (error.code === 'auth/popup-closed-by-user') {
+      throw new Error('Sign-in was cancelled. Please try again.');
+    } else if (error.code === 'auth/popup-blocked') {
+      throw new Error('Sign-in popup was blocked by your browser. Please allow popups for this site.');
+    } else if (error.code === 'auth/cancelled-popup-request') {
+      throw new Error('Another sign-in request is pending. Please try again.');
+    } else if (error.code === 'auth/network-request-failed') {
+      throw new Error('Network error. Please check your internet connection and try again.');
+    } else {
+      throw new Error(`Google sign-in failed: ${error.message || 'Unknown error'}`);
+    }
   }
 };
 
 /**
  * Sign out the current user
  */
-export const signOutUser = async () => {
+const signOutUser = async () => {
   if (!auth) {
     console.error('Auth is not initialized');
     throw new Error('Firebase auth is not initialized');
@@ -351,7 +376,7 @@ export const getCurrentUser = (): Promise<User | null> => {
 };
 
 // Listen to auth state changes
-export const onAuthStateChange = (callback: (user: User | null) => void) => {
+const onAuthStateChange = (callback: (user: User | null) => void) => {
   if (!auth) {
     console.error('Auth is not initialized');
     callback(null);
@@ -359,4 +384,14 @@ export const onAuthStateChange = (callback: (user: User | null) => void) => {
   }
   
   return onAuthStateChanged(auth, callback);
+};
+
+// Export all named auth functions
+export {
+  createTestUser,
+  registerUser,
+  signInUser,
+  signInWithGoogle,
+  signOutUser,
+  onAuthStateChange
 }; 

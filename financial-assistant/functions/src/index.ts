@@ -9,15 +9,82 @@ admin.initializeApp();
 // Reference to Firestore
 const db = admin.firestore();
 
+// Define types for better type safety
+interface PortfolioData {
+  assets?: any[];
+  balances?: Record<string, number>;
+  performance?: Record<string, number>;
+}
+
+interface UserPreferences {
+  riskLevel?: 'low' | 'medium' | 'high';
+  investmentGoals?: string[];
+  notifications?: boolean;
+}
+
+interface ChatMessage {
+  message: string;
+  response: string;
+  timestamp: admin.firestore.Timestamp;
+}
+
+interface FinancialProfile {
+  incomeRange?: string;
+  investmentGoals?: string[];
+  riskTolerance?: 'low' | 'medium' | 'high';
+}
+
+interface MarketData {
+  // Market data interface
+  indices?: Record<string, number>;
+  trends?: Record<string, string>;
+  timestamp?: Date;
+}
+
+interface FinancialNews {
+  // Financial news interface
+  articles?: {
+    title: string;
+    url: string;
+    source: string;
+    date: string;
+  }[];
+}
+
+// Safe type-checking functions
+function hasAuth(context: any): context is { auth: { uid: string } } {
+  return context && context.auth && typeof context.auth.uid === 'string';
+}
+
+function hasPortfolioData(data: any): data is { portfolioData: any; userPreferences: any } {
+  return data && typeof data.portfolioData === 'object' && typeof data.userPreferences === 'object';
+}
+
+function hasChatData(data: any): data is { history: any[]; newMessage: string } {
+  return data && Array.isArray(data.history) && typeof data.newMessage === 'string';
+}
+
+function hasFinancialProfile(data: any): data is { financialProfile: any } {
+  return data && typeof data.financialProfile === 'object';
+}
+
 /**
  * Generate AI-powered financial insights based on user data
  */
 export const generateFinancialInsights = functions.https.onCall(async (data, context) => {
   // Ensure user is authenticated
-  if (!context.auth) {
+  if (!hasAuth(context)) {
     throw new functions.https.HttpsError(
       'unauthenticated',
       'You must be logged in to use this feature.'
+    );
+  }
+
+  // Validate data
+  if (!hasPortfolioData(data)) {
+    throw new functions.https.HttpsError(
+      'invalid-argument',
+      'Missing required portfolio data and user preferences.'
     );
   }
 
@@ -50,10 +117,18 @@ export const generateFinancialInsights = functions.https.onCall(async (data, con
  */
 export const generateChatResponse = functions.https.onCall(async (data, context) => {
   // Ensure user is authenticated
-  if (!context.auth) {
+  if (!hasAuth(context)) {
     throw new functions.https.HttpsError(
       'unauthenticated',
       'You must be logged in to use this feature.'
+    );
+  }
+  
+  // Validate data
+  if (!hasChatData(data)) {
+    throw new functions.https.HttpsError(
+      'invalid-argument',
+      'Missing required chat history and message.'
     );
   }
   
@@ -92,7 +167,7 @@ export const generateChatResponse = functions.https.onCall(async (data, context)
  */
 export const getPortfolioData = functions.https.onCall(async (data, context) => {
   // Ensure user is authenticated
-  if (!context.auth) {
+  if (!hasAuth(context)) {
     throw new functions.https.HttpsError(
       'unauthenticated',
       'You must be logged in to use this feature.'
@@ -119,7 +194,7 @@ export const getPortfolioData = functions.https.onCall(async (data, context) => 
  */
 export const getMarketData = functions.https.onCall(async (data, context) => {
   // Ensure user is authenticated
-  if (!context.auth) {
+  if (!hasAuth(context)) {
     throw new functions.https.HttpsError(
       'unauthenticated',
       'You must be logged in to use this feature.'
@@ -146,7 +221,7 @@ export const getMarketData = functions.https.onCall(async (data, context) => {
  */
 export const getFinancialNews = functions.https.onCall(async (data, context) => {
   // Ensure user is authenticated
-  if (!context.auth) {
+  if (!hasAuth(context)) {
     throw new functions.https.HttpsError(
       'unauthenticated',
       'You must be logged in to use this feature.'
@@ -173,10 +248,18 @@ export const getFinancialNews = functions.https.onCall(async (data, context) => 
  */
 export const updateFinancialProfile = functions.https.onCall(async (data, context) => {
   // Ensure user is authenticated
-  if (!context.auth) {
+  if (!hasAuth(context)) {
     throw new functions.https.HttpsError(
       'unauthenticated',
       'You must be logged in to use this feature.'
+    );
+  }
+  
+  // Validate data
+  if (!hasFinancialProfile(data)) {
+    throw new functions.https.HttpsError(
+      'invalid-argument',
+      'Missing required financial profile data.'
     );
   }
   

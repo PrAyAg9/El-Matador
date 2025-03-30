@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/components/auth/AuthProvider';
 import {
   ArrowTrendingUpIcon,
   ArrowTrendingDownIcon,
@@ -29,7 +29,7 @@ interface TrendingInvestmentsProps {
 }
 
 export default function TrendingInvestments({ className = '' }: TrendingInvestmentsProps) {
-  const { userData } = useAuth();
+  const { user } = useAuth();
   const [activeMarket, setActiveMarket] = useState<MarketType>('stocks');
   const [trendingItems, setTrendingItems] = useState<InvestmentTrend[]>([]);
   

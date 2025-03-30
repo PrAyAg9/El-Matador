@@ -1,30 +1,10 @@
-# FinAI Assistant - AI-Powered Financial Assistant
+# El Matador Financial Assistant
 
-FinAI Assistant is a modern web application that combines the power of AI with financial expertise to provide users with personalized financial guidance and insights.
+An AI-powered financial assistant that combines cutting-edge artificial intelligence with financial expertise to provide personalized financial guidance.
 
-## Features
+![El Matador Financial Assistant](./public/elmatador.png)
 
-- **AI-Powered Financial Assistant**: Get personalized financial advice, insights, and recommendations through natural language interactions
-- **User Authentication**: Secure user registration and login using Firebase Authentication
-- **Personalized Dashboard**: View financial insights tailored to your profile and preferences
-- **Investment Tracking**: Monitor your investments and portfolio performance
-- **Real-time Data**: Access up-to-date financial information and market trends
-- **Responsive Design**: Enjoy a seamless experience across desktop and mobile devices
-
-## Tech Stack
-
-- **Frontend**:
-  - Next.js with TypeScript
-  - Tailwind CSS for styling
-  - React Query for data fetching
-  - Zustand for state management
-
-- **Backend & Services**:
-  - Firebase (Authentication, Firestore, Cloud Functions)
-  - Google Gemini API for AI capabilities
-  - IDX Platform API for financial data
-
-## Getting Started
+## Quick Start
 
 ### Prerequisites
 
@@ -32,7 +12,6 @@ FinAI Assistant is a modern web application that combines the power of AI with f
 - npm or yarn
 - Firebase account
 - Google Gemini API key
-- (Optional) IDX platform API key
 
 ### Installation
 
@@ -50,7 +29,7 @@ FinAI Assistant is a modern web application that combines the power of AI with f
    ```
 
 3. Configure environment variables:
-   Create a `.env.local` file in the root directory with the following variables:
+   Create a `.env.local` file in the root directory with:
    ```
    # Firebase Configuration
    NEXT_PUBLIC_FIREBASE_API_KEY=your_api_key
@@ -63,19 +42,83 @@ FinAI Assistant is a modern web application that combines the power of AI with f
 
    # Google Gemini API Key
    NEXT_PUBLIC_GEMINI_API_KEY=your_gemini_api_key
-
-   # IDX Platform API Key (Optional)
-   NEXT_PUBLIC_IDX_API_KEY=your_idx_api_key
    ```
 
 4. Run the development server:
    ```bash
    npm run dev
-   # or
-   yarn dev
    ```
 
-5. Open [http://localhost:3000](http://localhost:3000) in your browser to see the application.
+5. Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+## El Matador: The Future of Financial AI
+
+El Matador represents the next generation of AI-powered financial assistance, delivering advanced capabilities beyond traditional financial tools.
+
+### Revolutionary Features
+
+- **Fully Automated Financial Agent**: The upcoming El Matador Autopilot feature will revolutionize personal finance by autonomously managing investments, optimizing expenses, and making smart financial decisions in real-time.
+
+- **Advanced AI Financial Analysis**: Utilizes state-of-the-art AI models to analyze market trends, economic indicators, and your personal financial data to deliver insights human advisors might miss.
+
+- **Premium Visualization & Reporting**: Converts complex financial data into intuitive visualizations and actionable insights through beautifully formatted Markdown-rich reports.
+
+- **Personalized Investment Strategies**: Tailors investment recommendations to your specific financial situation, risk tolerance, and long-term goals using advanced machine learning algorithms.
+
+- **Wealth Growth Automation**: Continuously monitors your financial ecosystem to optimize wealth growth through tax-efficient strategies, automated portfolio rebalancing, and smart debt management.
+
+### El Matador Premium Services
+
+![El Matador Premium Services](./public/elmatador-services.png)
+
+Our platform offers specialized financial services, each powered by the El Matador AI:
+
+| Service | Description |
+|---------|-------------|
+| Budget Creation & Management | Automated budget creation based on income, expenses, and goals with intelligent categorization |
+| Credit Score Improvement | Strategic recommendations to boost credit scores through personalized debt management plans |
+| Retirement Planning | Sophisticated modeling for retirement goals with tax-optimized contribution strategies |
+| Investment Opportunities | AI-curated investment opportunities tailored to your risk profile and financial objectives |
+| Tax Planning & Optimization | Proactive tax planning with strategies to minimize liabilities and maximize returns |
+| Stock & Mutual Fund Analysis | In-depth analysis of potential investments using proprietary valuation models |
+| Estate Planning & Asset Protection | Comprehensive guidance for wealth preservation and transfer strategies |
+| Banking & Financial Services | Optimized recommendations for banking products and services based on your needs |
+
+## Application Routes
+
+The application is structured with the following key routes:
+
+- **/** - Homepage with introduction to El Matador
+- **/login** - Authentication page with Google and email/password sign-in
+- **/dashboard** - Main user dashboard with financial overview
+  - **/dashboard/elmatador** - El Matador AI dashboard with premium features
+  - **/dashboard/investments** - Investment portfolio tracking and El Matador investment opportunities
+  - **/dashboard/profile** - User profile management and financial preferences
+- **/assistant** - AI financial assistant interface for natural language interactions
+
+## Main Features
+
+- **AI-Powered Financial Assistant**: Get personalized financial advice, insights, and recommendations through natural language interactions
+- **El Matador Premium Services**: Access specialized financial analysis tools with enhanced visualizations and detailed recommendations
+- **Markdown-Powered Responses**: View beautifully formatted financial advice with charts, tables, and rich formatting
+- **User Authentication**: Secure user registration and login using Firebase Authentication
+- **Personalized Dashboard**: View financial insights tailored to your profile and preferences
+- **Investment Tracking**: Monitor your investments and portfolio performance
+- **Real-time Data**: Access up-to-date financial information and market trends
+- **Responsive Design**: Enjoy a seamless experience across desktop and mobile devices
+
+## Tech Stack
+
+- **Frontend**:
+  - Next.js with TypeScript
+  - Tailwind CSS for styling
+  - React Query for data fetching
+  - Zustand for state management
+
+- **Backend & Services**:
+  - Firebase (Authentication, Firestore, Cloud Functions)
+  - Google Gemini AI for sophisticated financial analysis
+  - Markdown rendering for rich text responses
 
 ## Deployment
 
@@ -100,8 +143,6 @@ The application can be deployed on Firebase Hosting:
 4. Build the application:
    ```bash
    npm run build
-   # or
-   yarn build
    ```
 
 5. Deploy to Firebase:
@@ -113,69 +154,24 @@ The application can be deployed on Firebase Hosting:
 
 ```
 financial-assistant/
-├── public/             # Static assets
+├── public/                  # Static assets
 ├── src/
-│   ├── app/            # Next.js app router pages
-│   ├── components/     # Reusable UI components
-│   ├── context/        # React context providers
-│   ├── lib/            # Utility functions and API clients
-│   │   ├── firebase/   # Firebase related functions
-│   │   ├── gemini/     # Google Gemini API client
-│   │   └── idx/        # IDX platform API client
-│   ├── hooks/          # Custom React hooks
-│   └── types/          # TypeScript type definitions
-├── .env.local          # Environment variables (git-ignored)
-├── tailwind.config.js  # Tailwind CSS configuration
-└── package.json        # Project dependencies
+│   ├── app/                 # Next.js app router pages
+│   │   ├── dashboard/       # Dashboard routes
+│   │   ├── assistant/       # AI assistant route
+│   │   └── login/           # Authentication pages
+│   ├── components/          # Reusable UI components
+│   │   ├── auth/            # Authentication components
+│   │   ├── dashboard/       # Dashboard components
+│   │   └── layout/          # Layout components
+│   ├── lib/                 # Utility functions and API clients
+│   │   ├── firebase/        # Firebase related functions
+│   │   └── gemini/          # Google Gemini API client
+│   └── types/               # TypeScript type definitions
+├── functions/               # Firebase cloud functions
+├── tailwind.config.js       # Tailwind CSS configuration
+└── package.json             # Project dependencies
 ```
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## Acknowledgements
-
-- [Firebase](https://firebase.google.com/) for backend services
-- [Google Gemini](https://ai.google.dev/) for AI capabilities
-- [Next.js](https://nextjs.org/) for the frontend framework
-- [Tailwind CSS](https://tailwindcss.com/) for styling
-
-## Running the Development Server
-
-### Option 1: Standard Start
-
-```bash
-npm run dev
-# or
-yarn dev
-```
-
-### Option 2: With Firebase Emulators (PowerShell)
-
-Since PowerShell doesn't support the `&&` operator for command chaining, use one of these methods:
-
-**Method 1: Using separate terminal windows**
-1. Start Firebase emulators in one terminal:
-   ```powershell
-   firebase emulators:start
-   ```
-   
-2. Start Next.js in another terminal:
-   ```powershell
-   npm run dev
-   ```
-
-**Method 2: Using PowerShell's semicolon operator**
-```powershell
-firebase emulators:start; npm run dev
-```
-
-**Method 3: Using the Start-Process cmdlet**
-```powershell
-Start-Process powershell -ArgumentList "firebase emulators:start" -NoNewWindow; npm run dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) in your browser to see the application.
 
 ## Google Authentication & Gemini AI Setup
 
@@ -196,24 +192,13 @@ Open [http://localhost:3000](http://localhost:3000) in your browser to see the a
    NEXT_PUBLIC_GEMINI_API_KEY=your_api_key_here
    ```
 
-### Using Test User Mode
+## License
 
-If you want to test the application without setting up Firebase or Gemini API:
+This project is licensed under the MIT License - see the LICENSE file for details.
 
-1. Navigate to `/auth/simple-login` or `/login`
-2. Click on the **Test User** login option
-3. This will bypass authentication and use mock AI responses
+## Acknowledgements
 
-## Using the PowerShell Script
-
-Since PowerShell doesn't support the `&&` operator for running multiple commands, we've created a helper script:
-
-```powershell
-# Run this in PowerShell
-./run-dev.ps1
-```
-
-This script will:
-1. Start Firebase emulators in a background window
-2. Run the Next.js development server
-3. Provide helpful information about available endpoints
+- [Firebase](https://firebase.google.com/) for backend services
+- [Google Gemini](https://ai.google.dev/) for AI capabilities
+- [Next.js](https://nextjs.org/) for the frontend framework
+- [Tailwind CSS](https://tailwindcss.com/) for styling

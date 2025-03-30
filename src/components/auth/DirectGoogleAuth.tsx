@@ -3,10 +3,9 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { FcGoogle } from 'react-icons/fc';
-import { auth, googleProvider } from '@/lib/firebase/config';
+import { auth, googleProvider, firestoreDb } from '@/lib/firebase/config';
 import { signInWithPopup } from 'firebase/auth';
 import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase/config';
 
 export default function DirectGoogleAuth() {
   const router = useRouter();
@@ -18,13 +17,23 @@ export default function DirectGoogleAuth() {
     setLoading(true);
 
     try {
+      // Check if auth is initialized
+      if (!auth || !googleProvider) {
+        throw new Error('Authentication is not initialized');
+      }
+
       // Directly use Firebase auth without extra wrapper
       console.log('Starting Google sign-in directly...');
       const userCredential = await signInWithPopup(auth, googleProvider);
       console.log('Google sign-in successful:', userCredential.user.uid);
       
+      // Check if firestoreDb is initialized
+      if (!firestoreDb) {
+        throw new Error('Firestore is not initialized');
+      }
+
       // Check if the user document exists
-      const userDocRef = doc(db, 'users', userCredential.user.uid);
+      const userDocRef = doc(firestoreDb, 'users', userCredential.user.uid);
       const userDoc = await getDoc(userDocRef);
       
       if (!userDoc.exists()) {

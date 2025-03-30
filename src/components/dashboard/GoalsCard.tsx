@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/components/auth/AuthProvider';
 import { CheckCircleIcon, TrophyIcon } from '@heroicons/react/24/outline';
 
 interface GoalType {
@@ -61,13 +61,14 @@ const GOAL_DETAILS: Record<string, Partial<GoalType>> = {
 };
 
 export default function GoalsCard({ className = '' }: GoalsCardProps) {
-  const { userData } = useAuth();
+  const { user } = useAuth();
   const [goals, setGoals] = useState<GoalType[]>([]);
 
   useEffect(() => {
-    if (userData?.financialProfile?.goals?.length) {
+    // Check if user has investment goals (use investmentGoals instead of goals)
+    if (user?.financialProfile?.investmentGoals?.length) {
       // Map user's goals to our detailed goal objects with random progress
-      const userGoals = userData.financialProfile.goals.map(goalId => {
+      const userGoals = user.financialProfile.investmentGoals.map((goalId: string) => {
         const details = GOAL_DETAILS[goalId] || {};
         // Generate random progress for demo purposes
         const progress = Math.floor(Math.random() * 100);
@@ -101,7 +102,7 @@ export default function GoalsCard({ className = '' }: GoalsCardProps) {
         }
       ]);
     }
-  }, [userData]);
+  }, [user]);
 
   // Returns appropriate color based on progress
   const getProgressColor = (progress: number) => {

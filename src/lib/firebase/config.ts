@@ -37,20 +37,27 @@ const auth = isBrowser && app ? getAuth(app) : null;
 const firestoreDb = isBrowser && app ? getFirestore(app) : null;
 const functions = isBrowser && app ? getFunctions(app) : null;
 
+// Initialize Google Auth Provider - ensure it's created only once
+let googleProvider: GoogleAuthProvider | null = null;
+if (isBrowser && auth) {
+  try {
+    googleProvider = new GoogleAuthProvider();
+    googleProvider.setCustomParameters({
+      prompt: 'select_account',
+    });
+    console.log('Google auth provider initialized successfully');
+  } catch (error) {
+    console.error('Error initializing Google auth provider:', error);
+  }
+}
+
 // For debugging
 if (isBrowser) {
   console.log('Firebase initialization status:');
   console.log('- Auth initialized:', auth ? 'Yes' : 'No');
   console.log('- Firestore initialized:', firestoreDb ? 'Yes' : 'No');
   console.log('- Functions initialized:', functions ? 'Yes' : 'No');
-}
-
-// Initialize Google Auth Provider
-const googleProvider = isBrowser ? new GoogleAuthProvider() : null;
-if (isBrowser && googleProvider) {
-  googleProvider.setCustomParameters({
-    prompt: 'select_account',
-  });
+  console.log('- Google Provider initialized:', googleProvider ? 'Yes' : 'No');
 }
 
 // Mock Firestore implementation for local development

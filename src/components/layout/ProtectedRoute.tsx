@@ -2,19 +2,19 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/components/auth/AuthProvider';
 
 export default function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, loading } = useAuth();
+  const { user, loading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
     // Only check after auth state is loaded
-    if (!loading && !isAuthenticated) {
+    if (!loading && !user) {
       // User is not authenticated, redirect to login
       router.push('/login');
     }
-  }, [isAuthenticated, loading, router]);
+  }, [loading, user, router]);
 
   // Show nothing while loading
   if (loading) {
@@ -29,5 +29,5 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
   }
 
   // If authenticated, show content
-  return isAuthenticated ? <>{children}</> : null;
+  return user ? <>{children}</> : null;
 } 

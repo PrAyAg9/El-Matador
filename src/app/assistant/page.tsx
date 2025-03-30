@@ -1,10 +1,9 @@
 'use client';
 
-import { useState, useEffect, useRef, useLayoutEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/components/auth/AuthProvider';
 import ChatInterface from '@/components/dashboard/ChatInterface';
 import { User } from 'firebase/auth';
-import { useSearchParams } from 'next/navigation';
 
 // Extended User type with our custom properties
 interface ExtendedUser extends User {
@@ -21,46 +20,26 @@ export default function AssistantPage() {
   const [isActivatingAI, setIsActivatingAI] = useState(true);
   const pageRef = useRef<HTMLDivElement>(null);
   const [activeTopic, setActiveTopic] = useState('');
-  const searchParams = useSearchParams();
   
   // Reference to artificially trigger events in ChatInterface
   const chatInputRef = useRef<HTMLInputElement>(null);
   
-  // Force scroll to top on initial load - using useLayoutEffect to run before render
-  useLayoutEffect(() => {
-    window.scrollTo(0, 0);
-  }, []);
-  
   // Simulate AI mode activation
   useEffect(() => {
     const timer = setTimeout(() => {
-      // Force scroll to top again right before showing the chat interface
-      window.scrollTo(0, 0);
       setIsActivatingAI(false);
-      
-      // Check if there's a topic parameter in the URL
-      const topicParam = searchParams.get('topic');
-      if (topicParam) {
-        setActiveTopic(topicParam);
+      // Ensure the page stays at the top after loading
+      if (pageRef.current) {
+        window.scrollTo(0, 0);
       }
     }, 2000);
     
     return () => clearTimeout(timer);
-  }, [searchParams]);
+  }, []);
 
-  // Add event listener to prevent any automatic scrolling
+  // Force scroll to top on initial load
   useEffect(() => {
-    const preventScroll = () => {
-      window.scrollTo(0, 0);
-    };
-    
-    // Add event listener for scroll events
-    window.addEventListener('scroll', preventScroll, { passive: false });
-    
-    // Cleanup - remove event listener when component unmounts
-    return () => {
-      window.removeEventListener('scroll', preventScroll);
-    };
+    window.scrollTo(0, 0);
   }, []);
   
   // Effect to handle topic selection
@@ -69,42 +48,24 @@ export default function AssistantPage() {
       // Find the chat input and simulate typing
       const inputElement = document.querySelector('#chat-input') as HTMLInputElement;
       if (inputElement) {
-        // Set the value based on the topic
-        let message = '';
+        // Set the value
         switch (activeTopic) {
           case 'retirement':
-            message = 'How should I plan for retirement?';
+            inputElement.value = 'How should I plan for retirement?';
             break;
           case 'investment':
-            message = 'What investment strategies would you recommend?';
+            inputElement.value = 'What investment strategies would you recommend?';
             break;
           case 'tax':
-            message = 'How can I optimize my tax planning?';
+            inputElement.value = 'How can I optimize my tax planning?';
             break;
           case 'debt':
-            message = 'What is the best way to manage my debt?';
+            inputElement.value = 'What is the best way to manage my debt?';
             break;
-          case 'markets':
-            message = 'What are the current market trends I should know about?';
-            break;
-          case 'accounts':
-            message = 'How should I manage my different financial accounts?';
-            break;
-          case 'credit':
-            message = 'How can I improve my credit score and manage credit cards effectively?';
-            break;
-          case 'help':
-            message = 'I need help understanding how to use El Matador financial services.';
-            break;
-          default:
-            message = `Tell me about ${activeTopic} in personal finance.`;
         }
         
-        inputElement.value = message;
-        
-        // Trigger the enter key press after a delay to ensure chat is visible
+        // Trigger the enter key press
         setTimeout(() => {
-          window.scrollTo(0, 0); // Ensure we're still at the top
           const enterEvent = new KeyboardEvent('keydown', {
             bubbles: true,
             cancelable: true,

@@ -64,35 +64,13 @@ interface ExtendedUser extends User {
 
 export default function DashboardPage() {
   const { user, loading } = useAuth();
-  const extendedUser = user as ExtendedUser | null;
   const router = useRouter();
   const [pageLoading, setPageLoading] = useState(true);
   const [isProfileComplete, setIsProfileComplete] = useState(false);
   const [greeting, setGreeting] = useState('Good day');
   const [currentDate, setCurrentDate] = useState('');
   const [showProfileModal, setShowProfileModal] = useState(false);
-  const [financialProfile, setFinancialProfile] = useState<ElMatadorProfile | null>(null);
-  
-  // Load financial profile from localStorage if available
-  useEffect(() => {
-    if (extendedUser?.uid && typeof window !== 'undefined') {
-      try {
-        // Try to get profile from localStorage first (most up-to-date)
-        const storedProfile = localStorage.getItem('userFinancialProfile');
-        if (storedProfile) {
-          const parsedProfile = JSON.parse(storedProfile);
-          setFinancialProfile(parsedProfile);
-          setIsProfileComplete(true);
-        } else if (extendedUser.financialProfile) {
-          // Use profile from user object if available
-          setFinancialProfile(extendedUser.financialProfile as ElMatadorProfile);
-          setIsProfileComplete(true);
-        }
-      } catch (e) {
-        console.error('Error loading financial profile:', e);
-      }
-    }
-  }, [extendedUser]);
+  const extendedUser = user as ExtendedUser | null;
 
   // Set greeting based on time of day
   useEffect(() => {
@@ -125,8 +103,8 @@ export default function DashboardPage() {
 
   // Generate action items based on user's financial profile
   const getActionItems = (): ActionItem[] => {
-    // Get the financial profile
-    const elMatadorProfile = financialProfile;
+    // Get the financial profile from user - handle both formats
+    const elMatadorProfile = extendedUser?.financialProfile;
     
     // Generate dynamic action items based on user data
     if (!elMatadorProfile) {
@@ -207,8 +185,7 @@ export default function DashboardPage() {
         router.push('/login');
       } else {
         // Check if financial profile exists - handle both formats
-        const storedProfile = typeof window !== 'undefined' ? localStorage.getItem('userFinancialProfile') : null;
-        setIsProfileComplete(!!extendedUser?.financialProfile || !!storedProfile);
+        setIsProfileComplete(!!extendedUser?.financialProfile);
         
         // Simulate data loading
         const timer = setTimeout(() => {
@@ -271,7 +248,7 @@ export default function DashboardPage() {
           <div className="flex flex-col md:flex-row md:items-center md:justify-between">
             <div>
               <h1 className="text-2xl sm:text-3xl font-bold text-white">
-                {greeting}, {extendedUser?.displayName || financialProfile?.name || 'Investor'}
+                {greeting}, {user?.displayName || 'Investor'}
               </h1>
               <p className="text-gray-400 mt-1">
                 {currentDate} · {getRandomMotivationalQuote()}
@@ -311,7 +288,7 @@ export default function DashboardPage() {
               action: () => openProfileModal()
             },
             { 
-              title: 'Chat with AI', 
+                title: 'Chat with AI', 
               icon: <ChatBubbleLeftRightIcon className="h-6 w-6" />, 
               color: 'bg-purple-100 text-purple-600',
               link: '/assistant'
@@ -320,31 +297,31 @@ export default function DashboardPage() {
               title: 'Investments', 
               icon: <ChartBarIcon className="h-6 w-6" />, 
               color: 'bg-blue-100 text-blue-600',
-              link: '/dashboard/investments'
+              link: '/investments'
             },
             { 
               title: 'Markets', 
               icon: <ArrowTrendingUpIcon className="h-6 w-6" />, 
               color: 'bg-green-100 text-green-600',
-              link: '/assistant?topic=markets'
+              link: '/markets'
             },
             { 
               title: 'Accounts', 
               icon: <BanknotesIcon className="h-6 w-6" />, 
               color: 'bg-yellow-100 text-yellow-600',
-              link: '/assistant?topic=accounts'
+              link: '/accounts'
             },
             { 
               title: 'Credit', 
               icon: <CreditCardIcon className="h-6 w-6" />, 
               color: 'bg-red-100 text-red-600',
-              link: '/assistant?topic=credit'
+              link: '/credit'
             },
             { 
               title: 'Help', 
               icon: <QuestionMarkCircleIcon className="h-6 w-6" />, 
               color: 'bg-gray-100 text-gray-600',
-              link: '/assistant?topic=help'
+              link: '/help'
             }
           ].map((action, index) => {
             // Use either Link or button based on whether it has a link or action

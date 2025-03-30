@@ -81,17 +81,30 @@ export default function AuthPage() {
     setGoogleLoading(true);
 
     try {
+      console.log('Attempting Google sign-in...');
+      if (typeof signInWithGoogle !== 'function') {
+        console.error('signInWithGoogle is not a function', typeof signInWithGoogle);
+        throw new Error('Sign-in with Google is currently unavailable. Please try again later or use email login.');
+      }
+      
       await signInWithGoogle();
+      console.log('Google sign-in successful, redirecting...');
       router.push('/dashboard');
     } catch (error: any) {
       console.error('Google sign-in error:', error);
       
-      if (error.code === 'auth/popup-blocked') {
-        setError('Sign-in popup was blocked');
+      if (error.message) {
+        setError(error.message);
+      } else if (error.code === 'auth/popup-blocked') {
+        setError('Sign-in popup was blocked. Please allow popups for this site.');
       } else if (error.code === 'auth/popup-closed-by-user') {
-        setError('Sign-in was cancelled');
+        setError('Sign-in was cancelled.');
+      } else if (error.code === 'auth/cancelled-popup-request') {
+        setError('Another sign-in request is pending. Please try again.');
+      } else if (error.code === 'auth/network-request-failed') {
+        setError('Network error. Please check your internet connection.');
       } else {
-        setError('Failed to sign in with Google');
+        setError('Failed to sign in with Google. Please try again later.');
       }
     } finally {
       setGoogleLoading(false);

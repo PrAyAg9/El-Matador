@@ -191,25 +191,29 @@ export default function ElMatadorModal() {
       
       // Save the data using our function
       try {
+        // Store directly to localStorage for immediate use
+        if (typeof window !== 'undefined') {
+          // Save profile to localStorage
+          localStorage.setItem('userFinancialProfile', JSON.stringify(profileData));
+          
+          // Also update the current user object with the financial profile
+          const currentUserString = localStorage.getItem('currentUser');
+          if (currentUserString) {
+            try {
+              const currentUser = JSON.parse(currentUserString);
+              currentUser.financialProfile = profileData;
+              localStorage.setItem('currentUser', JSON.stringify(currentUser));
+            } catch (err) {
+              console.error('Error updating currentUser in localStorage:', err);
+            }
+          }
+        }
+        
+        // Now save to Firebase
         const success = await firebaseFunctions.updateElMatadorProfile(user.uid, profileData);
         
         if (success) {
           setSuccessMessage('Your financial profile has been saved!');
-          
-          // Store profile data in localStorage to ensure it's available immediately after redirect
-          if (typeof window !== 'undefined') {
-            localStorage.setItem('userFinancialProfile', JSON.stringify(profileData));
-            // Update user data in localStorage to make it immediately available
-            try {
-              const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
-              if (currentUser && currentUser.uid === user.uid) {
-                currentUser.financialProfile = profileData;
-                localStorage.setItem('currentUser', JSON.stringify(currentUser));
-              }
-            } catch (e) {
-              console.error('Error updating user data in localStorage:', e);
-            }
-          }
           
           // Close the modal after a short delay
           setTimeout(() => {

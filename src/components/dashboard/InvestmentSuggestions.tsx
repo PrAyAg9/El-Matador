@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/components/auth/AuthProvider';
 import { ArrowTrendingUpIcon, LightBulbIcon, ArrowRightIcon } from '@heroicons/react/24/outline';
 
 interface InvestmentType {
@@ -126,34 +126,40 @@ const INVESTMENT_OPTIONS: Record<string, InvestmentType[]> = {
 };
 
 export default function InvestmentSuggestions({ className = '' }: InvestmentSuggestionsProps) {
-  const { userData } = useAuth();
+  const { user } = useAuth();
   const [suggestions, setSuggestions] = useState<InvestmentType[]>([]);
   const [riskProfile, setRiskProfile] = useState<string>('moderate');
 
   useEffect(() => {
-    if (userData?.financialProfile?.riskTolerance) {
-      // Map user's risk tolerance to investment options
-      const userRiskTolerance = userData.financialProfile.riskTolerance;
+    let recommendedInvestments: InvestmentType[] = [];
+    const riskToleranceMap: Record<string, string> = {
+      'low': 'conservative',
+      'medium': 'moderate',
+      'high': 'aggressive'
+    };
+    
+    if (user?.financialProfile?.riskTolerance) {
+      // Convert user's risk tolerance to investment option keys
+      const userRiskTolerance = user.financialProfile.riskTolerance; // 'low', 'medium', or 'high'
       setRiskProfile(userRiskTolerance);
-      
-      let recommendedInvestments: InvestmentType[] = [];
+      const mappedRiskTolerance = riskToleranceMap[userRiskTolerance]; // convert to 'conservative', 'moderate', or 'aggressive'
       
       // Primary recommendations based on risk tolerance
-      if (INVESTMENT_OPTIONS[userRiskTolerance]) {
-        recommendedInvestments = [...INVESTMENT_OPTIONS[userRiskTolerance]];
+      if (mappedRiskTolerance && INVESTMENT_OPTIONS[mappedRiskTolerance]) {
+        recommendedInvestments = [...INVESTMENT_OPTIONS[mappedRiskTolerance]];
       } else {
         // Default to moderate if not found
         recommendedInvestments = [...INVESTMENT_OPTIONS.moderate];
       }
       
       // Add one suggestion from neighboring risk categories for diversity
-      if (userRiskTolerance === 'conservative' && INVESTMENT_OPTIONS.moderate) {
+      if (mappedRiskTolerance === 'conservative' && INVESTMENT_OPTIONS.moderate) {
         // Add one moderate option for conservative investors
         recommendedInvestments.push(INVESTMENT_OPTIONS.moderate[0]);
-      } else if (userRiskTolerance === 'aggressive' && INVESTMENT_OPTIONS.moderate) {
+      } else if (mappedRiskTolerance === 'aggressive' && INVESTMENT_OPTIONS.moderate) {
         // Add one moderate option for aggressive investors
         recommendedInvestments.push(INVESTMENT_OPTIONS.moderate[2]);
-      } else if (userRiskTolerance === 'moderate') {
+      } else if (mappedRiskTolerance === 'moderate') {
         // Add one conservative option for moderate investors
         if (INVESTMENT_OPTIONS.conservative) {
           recommendedInvestments.push(INVESTMENT_OPTIONS.conservative[0]);
@@ -166,7 +172,7 @@ export default function InvestmentSuggestions({ className = '' }: InvestmentSugg
       // Default suggestions if risk tolerance not set
       setSuggestions(INVESTMENT_OPTIONS.moderate);
     }
-  }, [userData]);
+  }, [user]);
 
   // Get color for risk level
   const getRiskColor = (risk: string) => {

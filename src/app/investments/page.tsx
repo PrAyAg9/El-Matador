@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { useAuth } from '@/context/AuthContext'
+import { useAuth } from '@/components/auth/AuthProvider'
 import { ChevronUpIcon, ChevronDownIcon } from '@heroicons/react/24/solid'
 
 export default function InvestmentsPage() {

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { useAuth } from '@/context/AuthContext'
+import { useAuth } from '@/components/auth/AuthProvider'
 import DashboardLayout from '@/components/dashboard/Layout'
 import { UserIcon, CreditCardIcon, BellIcon, CogIcon } from '@heroicons/react/24/outline'
 
@@ -18,8 +18,8 @@ interface NotificationPrefs {
 }
 
 export default function ProfilePage() {
-  const { user, loading, logout } = useAuth()
   const router = useRouter()
+  const { user, loading } = useAuth()
   const [activeTab, setActiveTab] = useState('personal')
   const [pageLoading, setPageLoading] = useState(true)
   const [saveLoading, setSaveLoading] = useState(false)
@@ -27,11 +27,11 @@ export default function ProfilePage() {
 
   // Personal information form state
   const [personalInfo, setPersonalInfo] = useState({
-    firstName: 'John',
-    lastName: 'Doe',
-    email: 'john.doe@example.com',
-    phone: '(555) 123-4567',
-    dateOfBirth: '1985-06-15'
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    dateOfBirth: ''
   })
 
   // Financial profile form state
@@ -47,7 +47,7 @@ export default function ProfilePage() {
 
   // Notification preferences form state
   const [notificationPrefs, setNotificationPrefs] = useState<NotificationPrefs>({
-    emailNotifications: true,
+    emailNotifications: true, 
     marketUpdates: true,
     portfolioAlerts: true,
     recommendationUpdates: true,
@@ -64,18 +64,25 @@ export default function ProfilePage() {
   })
 
   useEffect(() => {
+    if (user) {
+      const [firstName, lastName] = (user.displayName || '').split(' ');
+      
+      // Set form data
+      setPersonalInfo(prev => ({
+        ...prev,
+        firstName: firstName || '',
+        lastName: lastName || '',
+        email: user.email || '',
+        phone: user.financialProfile?.phone || ''
+      }))
+    }
+  }, [user]);
+
+  useEffect(() => {
     if (!loading) {
       if (!user) {
         router.push('/login')
       } else {
-        // Set email from authenticated user
-        if (user.email) {
-          setPersonalInfo(prev => ({
-            ...prev,
-            email: user.email
-          }))
-        }
-        
         // Simulate loading profile data
         const timer = setTimeout(() => {
           setPageLoading(false)
@@ -161,15 +168,6 @@ export default function ProfilePage() {
     }, 1500)
   }
 
-  const handleLogout = async () => {
-    try {
-      await logout()
-      router.push('/')
-    } catch (error) {
-      console.error('Error logging out:', error)
-    }
-  }
-
   if (loading || pageLoading) {
     return (
       <DashboardLayout>
@@ -188,12 +186,6 @@ export default function ProfilePage() {
       <div className="p-4 sm:p-6 md:p-8">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
           <h1 className="text-2xl font-bold text-indigo-400">Profile Settings</h1>
-          <button 
-            onClick={handleLogout}
-            className="mt-2 sm:mt-0 px-4 py-2 text-sm font-medium text-red-400 hover:text-red-300 bg-gray-700 hover:bg-gray-600 rounded-md transition-colors"
-          >
-            Sign Out
-          </button>
         </div>
         
         {/* Success Message */}

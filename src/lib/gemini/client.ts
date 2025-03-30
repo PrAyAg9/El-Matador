@@ -86,7 +86,7 @@ export const generateChatResponse = async (
 
     // Filter the history to ensure valid format for Gemini API
     // The first message must have role 'user', so we'll start with an empty history if needed
-    let validHistory = [];
+    let validHistory: Array<{role: string, parts: Array<{text: string}>}> = [];
     
     // Only include history if it's properly formatted (first message must be from user)
     if (history.length > 0 && history[0].role === 'user') {

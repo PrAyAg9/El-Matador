@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/components/auth/AuthProvider';
 import { ArrowUpIcon, ArrowDownIcon, ArrowRightIcon, PlusIcon, WalletIcon, CreditCardIcon, BanknotesIcon, CurrencyDollarIcon, ChartBarIcon } from '@heroicons/react/24/outline';
 import { firebaseFunctions } from '@/lib/firebase/functions';
 import Link from 'next/link';
@@ -10,9 +10,17 @@ interface WalletCardProps {
   className?: string;
 }
 
+interface FinancialProfile {
+  monthlyIncome?: string;
+  monthlyExpenses?: Record<string, string>;
+  incomeRange?: string;
+  investmentGoals?: string[];
+  riskTolerance?: 'low' | 'medium' | 'high';
+}
+
 export default function WalletCard({ className = '' }: WalletCardProps) {
-  const { userData } = useAuth();
-  const [userFinancialData, setUserFinancialData] = useState<any>(null);
+  const { user } = useAuth();
+  const [userFinancialData, setUserFinancialData] = useState<FinancialProfile | null>(null);
   const [isExpanded, setIsExpanded] = useState(false);
   
   // Calculate financial metrics
@@ -23,14 +31,14 @@ export default function WalletCard({ className = '' }: WalletCardProps) {
 
   useEffect(() => {
     // Try to get data from userData first (from Firebase)
-    let profile = userData?.financialProfile;
+    let profile: FinancialProfile | undefined = user?.financialProfile;
     
     // If no data from Firebase, try localStorage fallback
     if (!profile && typeof window !== 'undefined') {
       try {
         const localData = localStorage.getItem('userFinancialProfile');
         if (localData) {
-          profile = JSON.parse(localData);
+          profile = JSON.parse(localData) as FinancialProfile;
           console.log('Using localStorage financial profile data');
         }
       } catch (e) {
@@ -41,29 +49,30 @@ export default function WalletCard({ className = '' }: WalletCardProps) {
     if (profile) {
       setUserFinancialData(profile);
       
-      // Set financial values from profile
-      setMonthlyIncome(parseInt(profile.monthlyIncome) || 0);
+      // Set financial values from profile with proper type handling
+      setMonthlyIncome(Number(profile.monthlyIncome) || 0);
       
       // Sum up all monthly expenses
       let totalExpenses = 0;
       if (profile.monthlyExpenses) {
-        Object.values(profile.monthlyExpenses).forEach((amount: any) => {
-          totalExpenses += parseInt(amount) || 0;
+        Object.values(profile.monthlyExpenses).forEach((amount: string) => {
+          totalExpenses += Number(amount) || 0;
         });
       }
       
       setMonthlyExpenses(totalExpenses);
       
       // Calculate balance (income - expenses)
-      const calculatedBalance = parseInt(profile.monthlyIncome) - totalExpenses;
+      const calculatedBalance = (Number(profile.monthlyIncome) || 0) - totalExpenses;
       setBalance(calculatedBalance);
       
       // Calculate savings rate (balance / income * 100)
-      if (parseInt(profile.monthlyIncome) > 0) {
-        setSavingsRate((calculatedBalance / parseInt(profile.monthlyIncome)) * 100);
+      const income = Number(profile.monthlyIncome) || 0;
+      if (income > 0) {
+        setSavingsRate((calculatedBalance / income) * 100);
       }
     }
-  }, [userData]);
+  }, [user]);
 
   // Format currency
   const formatCurrency = (amount: number) => {

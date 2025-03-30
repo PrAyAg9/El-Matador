@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/components/auth/AuthProvider';
 import { ShieldCheckIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 
 interface HealthScoreProps {
@@ -9,7 +9,7 @@ interface HealthScoreProps {
 }
 
 export default function FinancialHealthScore({ className = '' }: HealthScoreProps) {
-  const { userData } = useAuth();
+  const { user } = useAuth();
   const [score, setScore] = useState<number>(0);
   const [scoreCategory, setScoreCategory] = useState<string>('');
   const [scoreColor, setScoreColor] = useState<string>('');
@@ -31,7 +31,7 @@ export default function FinancialHealthScore({ className = '' }: HealthScoreProp
 
   useEffect(() => {
     // Try to get data from userData first (from Firebase)
-    let profile = userData?.financialProfile;
+    let profile = user?.financialProfile;
     
     // If no data from Firebase, try localStorage fallback
     if (!profile && typeof window !== 'undefined') {
@@ -49,7 +49,7 @@ export default function FinancialHealthScore({ className = '' }: HealthScoreProp
     if (profile) {
       calculateHealthScore(profile);
     }
-  }, [userData]);
+  }, [user]);
 
   const calculateHealthScore = (profile: any) => {
     try {
@@ -118,7 +118,7 @@ export default function FinancialHealthScore({ className = '' }: HealthScoreProp
       
       // Investment diversity (0-25 points)
       // Based on number of different investment goals
-      const investmentGoals = goals.filter(goal => 
+      const investmentGoals = goals.filter((goal: string) => 
         ['retirement', 'investment', 'house', 'education'].includes(goal)
       );
       
